@@ -1,2 +1,1 @@
-# xjj.github.io
-wowCollect
+Collect
