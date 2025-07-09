@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>收集表</title>
+    <title>坐骑收集表</title>
     <style>
         body {
             font-family: 'Segoe UI', 'Arial', sans-serif;
@@ -56,12 +56,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>物品/坐骑收集表</h1>
+        <h1>坐骑收集表</h1>
         <table id="mountTable">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>物品/坐骑</th>
+                    <th>坐骑</th>
                     <th>出处</th>
                     <th>是否拥有</th>
                 </tr>
@@ -75,6 +75,64 @@
         // 数据数组
         const data = [
             { id: 1, name: '奥的灰烬', source: '风暴要塞 - 凯尔萨斯·逐日者', },
+            { id: 2, name: '安其拉虫子', source: '安其拉神殿 - 小怪&BOSS' },
+            { id: 3, name: '死亡战马', source: '斯坦索姆 - 奥里克斯·瑞文戴尔领主' },
+            { id: 4, name: '乌鸦之神', source: '赛泰克大厅 - 安苏' },
+            { id: 5, name: '白色陆行鸟', source: '奎尔丹纳斯岛 - 魔导师平台' },
+            { id: 6, name: '炽热战马', source: '卡拉赞 - 猎手阿图门' },
+            { id: 7, name: '蓝色始祖幼龙', source: '乌特加德之巅 - 残忍的斯卡迪' },
+            { id: 8, name: '黑色猛犸象', source: '阿尔卡冯的宝库 - 岩石看守者阿尔卡冯' },
+            { id: 9, name: '黑色幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
+            { id: 10, name: '暮光幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
+            { id: 11, name: '蓝色幼龙', source: '永恒之眼 - 玛里苟斯' },
+            { id: 12, name: '碧蓝幼龙', source: '永恒之眼 - 玛里苟斯' },
+            { id: 13, name: '米米尔隆的头部', source: '奥杜尔 - 尤格·萨隆' },
+            { id: 14, name: '奥妮克希亚座龙缰绳', source: '奥尼克希亚的巢穴 - 奥尼克希亚' },
+            { id: 15, name: '无敌', source: '冰冠堡垒 - 阿尔萨斯' },
+            { id: 16, name: '琉璃石幼龙', source: '巨石之核 - 岩皮' },
+            { id: 17, name: '北风幼龙', source: '旋云之巅 - 阿尔泰鲁斯' },
+            { id: 18, name: '迅猛龙', source: '祖尔格拉布 - 血领主曼多基尔' },
+            { id: 19, name: '黑豹', source: '祖尔格拉布 - 高阶祭司基尔娜拉' },
+            { id: 20, name: '南风幼龙', source: '风神王座 - 奥拉基尔' },
+            { id: 21, name: '米拉盖佐尔的灼热之卵', source: '火源之地 - 拉格纳罗斯' },
+            { id: 22, name: '奥利瑟拉佐尔的烈焰之爪', source: '火源之地 - 奥利瑟拉佐尔' },
+            { id: 23, name: '实验体12-B', source: '巨龙之魂 - 奥卓克希昂' },
+            { id: 24, name: '织炎幼龙', source: '巨龙之魂 - 死亡之翼' },
+            { id: 25, name: '生命缚誓者的仆从', source: '巨龙之魂 - 死亡之翼' },
+            { id: 26, name: '冰蓝原始恐角龙缰绳', source: '潘达利亚 - 乌达斯塔' },
+            { id: 27, name: '炮舰之子鞍座', source: '潘达利亚 - 萨莱斯的兵团' },
+            { id: 28, name: '神圣玛瑙云端翔龙缰绳', source: '潘达利亚 - 怒之煞' },
+            { id: 29, name: '雷霆蓝晶云端翔龙缰绳', source: '潘达利亚 - 暴风领主纳拉克' },
+            { id: 30, name: '星光云端翔龙', source: '魔古山宝库 - 伊拉贡' },
+            { id: 31, name: '郝利东的子嗣', source: '雷电王座 - 郝利东' },
+            { id: 32, name: '季鹍之嗣', source: '雷电王座 - 季鹍' },
+            { id: 33, name: '库卡隆战蝎', source: '决战奥格瑞玛 - 加尔鲁什·地狱咆哮' },
+            { id: 34, name: '日光峰林飞鹰', source: '德拉诺 - 鲁克玛' },
+            { id: 35, name: '铁蹄毁灭者', source: '黑市铸造厂 - 黑手' },
+            { id: 36, name: '魔钢歼灭者', source: '地狱火堡垒' },
+            { id: 37, name: '午夜', source: '重返卡拉赞 - 猎手阿图门' },
+            { id: 38, name: '魔化炎狱核心', source: '暗夜要塞 - 古尔丹' },
+            { id: 39, name: '活性地狱火核心', source: '暗夜要塞 - 古尔丹' },
+            { id: 40, name: '深渊蠕虫', source: '萨格拉斯之墓 - 主母萨斯琳' },
+            { id: 41, name: '带镣铐的乌祖尔', source: '安托鲁斯·燃烧王座 - 寂灭者阿古斯' },
+            { id: 42, name: '安托兰灼焦恶犬', source: '安托鲁斯·燃烧王座 - 萨格拉斯的恶犬' },
+            { id: 43, name: '孢林抱齿兽鞍具', source: '地渊孢林 - 不羁畸变怪' },
+            { id: 44, name: '鲨鱼饵', source: '自由镇 - 哈兰·斯威提' },
+            { id: 45, name: '迅猛龙枯骨', source: '诸王之眠 - 始皇达萨' },
+            { id: 46, name: '麦卡贡维和者', source: '麦卡贡行动 - HK-8型空中压制单位' },
+            { id: 47, name: '灭世机甲', source: '达萨罗之战 - 大工匠梅卡托克' },
+            { id: 48, name: '冰川狂潮', source: '达萨罗之战 - 吉安娜·普罗德摩尔' },
+            { id: 49, name: '尼奥罗萨全视者', source: '尼奥罗萨·觉醒之城 - 腐蚀者恩佐斯' },
+            { id: 50, name: '齿轮滑翔器', source: '塔扎维什·帷纱集市 - 索·莉亚' },
+            { id: 51, name: '髓牙', source: '通灵战潮 - 缚霜者纳尔佐' },
+            { id: 52, name: '阴郁军马', source: '统御圣所 - 九武神' },
+            { id: 53, name: '复仇', source: '统御圣所 - 希尔瓦拉斯·风行者' },
+            { id: 54, name: '扎雷监察者的分形密文', source: '初诞者圣墓 - 典狱长' },
+            { id: 55, name: '量子骏马的缰绳', source: '永恒黎明 - 时空领主戴欧斯' },
+            { id: 56, name: '阿努雷洛丝烈焰启迪的缰绳', source: '阿梅达希尔梦境之愿 - 火光之龙菲莱克' },
+            { id: 57, name: '烛芯的牵绳', source: '暗焰裂口 - 黑暗之主' },
+            { id: 58, name: '苏雷吉剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
+            { id: 59, name: '扬升剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
         ];
 
         // 已拥有的id
