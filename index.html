@@ -1,157 +1,695 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>坐骑收集表</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', 'Arial', sans-serif;
-            background: #f6f8fa;
-            margin: 0;
-            padding: 0;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收集品管理表</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1);
+      padding: 40px 32px;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      text-align: center;
+      color: #262626;
+      margin-bottom: 40px;
+      font-size: 2.5em;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border: 1px solid #f0f0f0;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0 4px;
+      border-radius: 10px;
+      font-weight: 500;
+      color: #595959;
+      position: relative;
+    }
+
+    .tab:hover {
+      background: #f0f8ff;
+      color: #1890ff;
+      transform: translateY(-2px);
+    }
+
+    .tab.active {
+      background: #1890ff;
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(24, 144, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+      padding: 16px 12px;
+      text-align: center;
+      position: relative;
+    }
+
+    th {
+      background: #fafafa;
+      color: #262626;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    th:first-child {
+      border-radius: 15px 0 0 0;
+    }
+
+    th:last-child {
+      border-radius: 0 15px 0 0;
+    }
+
+    tr {
+      transition: all 0.3s ease;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    tr:hover {
+      background: #f0f8ff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    tr.owned {
+      background: #f6ffed;
+    }
+
+    tr.owned:hover {
+      background: #d9f7be;
+    }
+
+    td.owned {
+      color: #52c41a;
+      font-weight: 500;
+    }
+
+    td.not-owned {
+      color: #ff4d4f;
+      font-weight: 500;
+    }
+
+    .collect-btn {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      background: transparent;
+      color: #1890ff;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 400;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      padding: 0;
+    }
+
+    .collect-btn:hover {
+      color: #40a9ff;
+      text-decoration: underline;
+      transform: translateY(-50%);
+    }
+
+    .collect-btn.collected {
+      color: #bfbfbf;
+      cursor: not-allowed;
+      transform: translateY(-50%);
+      text-decoration: none;
+    }
+
+    .collect-btn.collected:hover {
+      color: #bfbfbf;
+      text-decoration: none;
+    }
+
+    .status-cell {
+      text-align: center;
+      position: relative;
+      min-width: 120px;
+    }
+
+    td:first-child {
+      font-weight: 600;
+      color: #262626;
+    }
+
+    td:nth-child(2) {
+      font-weight: 500;
+      color: #262626;
+    }
+
+    td:nth-child(3) {
+      color: #8c8c8c;
+      font-size: 14px;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .container {
+        padding: 20px 16px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        font-size: 1.8em;
+        margin-bottom: 24px;
+      }
+
+      .tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 8px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+      }
+
+      .tab {
+        padding: 10px 16px;
+        margin: 0;
+        font-size: 14px;
+        border-radius: 8px;
+        flex: 1;
+        text-align: center;
+        min-width: calc(50% - 4px);
+      }
+
+      .tab:hover {
+        transform: none;
+      }
+
+      .tab.active {
+        transform: none;
+      }
+
+      table {
+        border-radius: 12px;
+        font-size: 14px;
+        overflow-x: auto;
+        display: block;
+        white-space: nowrap;
+      }
+
+      thead,
+      tbody,
+      tr {
+        display: block;
+      }
+
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tbody tr {
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 16px;
+        display: block;
+        position: relative;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      tbody tr.owned {
+        background: #f6ffed;
+      }
+
+      tbody tr:hover {
+        transform: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      td {
+        border: none;
+        padding: 8px 0;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        position: relative;
+        min-height: 32px;
+      }
+
+      td:before {
+        content: attr(data-label);
+        display: inline-block;
+        width: 80px;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #8c8c8c;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      td:first-child:before {
+        content: "ID";
+      }
+
+      td:nth-child(2):before {
+        content: "名称";
+      }
+
+      td:nth-child(3):before {
+        content: "出处";
+      }
+
+      td:last-child:before {
+        content: "状态";
+      }
+
+      td>* {
+        flex: 1;
+      }
+
+      .status-cell {
+        text-align: left;
+        min-width: auto;
+        justify-content: space-between;
+      }
+
+      .collect-btn {
+        position: static;
+        transform: none;
+        margin-left: 12px;
+        display: inline-block;
+        font-size: 14px;
+        padding: 4px 8px;
+        background: #1890ff;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        flex-shrink: 0;
+      }
+
+      .collect-btn:hover {
+        background: #40a9ff;
+        transform: none;
+        text-decoration: none;
+      }
+
+      .collect-btn.collected {
+        background: #d9d9d9;
+        color: #8c8c8c;
+      }
+
+      .collect-btn.collected:hover {
+        background: #d9d9d9;
+        color: #8c8c8c;
+      }
+
+      /* 平板端适配 */
+      @media (min-width: 481px) and (max-width: 768px) {
+        .tab {
+          min-width: calc(33.33% - 6px);
         }
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 32px 24px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 32px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-        th, td {
-            padding: 12px 8px;
-            text-align: left;
-        }
-        th {
-            background: #e9ecef;
-            color: #222;
-            font-weight: 600;
-        }
-        tr:nth-child(even) {
-            background: #f4f6fa;
-        }
-        tr.owned {
-            background: #d4f8e8;
-        }
-        td.owned {
-            color: #2e8b57;
-            font-weight: bold;
-        }
-        td.not-owned {
-            color: #b22222;
-            font-weight: bold;
-        }
-    </style>
+      }
+    }
+
+    /* 小屏手机适配 */
+    @media (max-width: 480px) {
+      .container {
+        padding: 16px 12px;
+        margin: 0 8px;
+      }
+
+      h1 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+      }
+
+      .tabs {
+        padding: 8px 4px;
+        gap: 4px;
+      }
+
+      .tab {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-width: 100%;
+      }
+
+      tbody tr {
+        padding: 12px;
+        margin-bottom: 8px;
+      }
+
+      td {
+        padding: 6px 0;
+        font-size: 13px;
+        min-height: 28px;
+      }
+
+      td:before {
+        width: 60px;
+        font-size: 11px;
+      }
+
+      .collect-btn {
+        font-size: 13px;
+        padding: 3px 6px;
+        margin-left: 8px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>坐骑收集表</h1>
-        <table id="mountTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>坐骑</th>
-                    <th>出处</th>
-                    <th>是否拥有</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 数据行将由JS插入 -->
-            </tbody>
-        </table>
+  <div class="container">
+    <h1>收集品管理表</h1>
+    <div class="tabs">
+      <div class="tab active" data-tab="mounts">坐骑</div>
+      <div class="tab" data-tab="transmog-armor">幻化防具</div>
+      <div class="tab" data-tab="transmog-weapon">幻化武器</div>
+      <div class="tab" data-tab="illusion">幻象</div>
+      <div class="tab" data-tab="toy">玩具</div>
     </div>
-    <script>
-        // 数据数组
-        const data = [
-            { id: 1, name: '奥的灰烬', source: '风暴要塞 - 凯尔萨斯·逐日者', },
-            { id: 2, name: '安其拉虫子', source: '安其拉神殿 - 小怪&BOSS' },
-            { id: 3, name: '死亡战马', source: '斯坦索姆 - 奥里克斯·瑞文戴尔领主' },
-            { id: 4, name: '乌鸦之神', source: '赛泰克大厅 - 安苏' },
-            { id: 5, name: '白色陆行鸟', source: '奎尔丹纳斯岛 - 魔导师平台' },
-            { id: 6, name: '炽热战马', source: '卡拉赞 - 猎手阿图门' },
-            { id: 7, name: '蓝色始祖幼龙', source: '乌特加德之巅 - 残忍的斯卡迪' },
-            { id: 8, name: '黑色猛犸象', source: '阿尔卡冯的宝库 - 岩石看守者阿尔卡冯' },
-            { id: 9, name: '黑色幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
-            { id: 10, name: '暮光幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
-            { id: 11, name: '蓝色幼龙', source: '永恒之眼 - 玛里苟斯' },
-            { id: 12, name: '碧蓝幼龙', source: '永恒之眼 - 玛里苟斯' },
-            { id: 13, name: '米米尔隆的头部', source: '奥杜尔 - 尤格·萨隆' },
-            { id: 14, name: '奥妮克希亚座龙缰绳', source: '奥尼克希亚的巢穴 - 奥尼克希亚' },
-            { id: 15, name: '无敌', source: '冰冠堡垒 - 阿尔萨斯' },
-            { id: 16, name: '琉璃石幼龙', source: '巨石之核 - 岩皮' },
-            { id: 17, name: '北风幼龙', source: '旋云之巅 - 阿尔泰鲁斯' },
-            { id: 18, name: '迅猛龙', source: '祖尔格拉布 - 血领主曼多基尔' },
-            { id: 19, name: '黑豹', source: '祖尔格拉布 - 高阶祭司基尔娜拉' },
-            { id: 20, name: '南风幼龙', source: '风神王座 - 奥拉基尔' },
-            { id: 21, name: '米拉盖佐尔的灼热之卵', source: '火源之地 - 拉格纳罗斯' },
-            { id: 22, name: '奥利瑟拉佐尔的烈焰之爪', source: '火源之地 - 奥利瑟拉佐尔' },
-            { id: 23, name: '实验体12-B', source: '巨龙之魂 - 奥卓克希昂' },
-            { id: 24, name: '织炎幼龙', source: '巨龙之魂 - 死亡之翼' },
-            { id: 25, name: '生命缚誓者的仆从', source: '巨龙之魂 - 死亡之翼' },
-            { id: 26, name: '冰蓝原始恐角龙缰绳', source: '潘达利亚 - 乌达斯塔' },
-            { id: 27, name: '炮舰之子鞍座', source: '潘达利亚 - 萨莱斯的兵团' },
-            { id: 28, name: '神圣玛瑙云端翔龙缰绳', source: '潘达利亚 - 怒之煞' },
-            { id: 29, name: '雷霆蓝晶云端翔龙缰绳', source: '潘达利亚 - 暴风领主纳拉克' },
-            { id: 30, name: '星光云端翔龙', source: '魔古山宝库 - 伊拉贡' },
-            { id: 31, name: '郝利东的子嗣', source: '雷电王座 - 郝利东' },
-            { id: 32, name: '季鹍之嗣', source: '雷电王座 - 季鹍' },
-            { id: 33, name: '库卡隆战蝎', source: '决战奥格瑞玛 - 加尔鲁什·地狱咆哮' },
-            { id: 34, name: '日光峰林飞鹰', source: '德拉诺 - 鲁克玛' },
-            { id: 35, name: '铁蹄毁灭者', source: '黑市铸造厂 - 黑手' },
-            { id: 36, name: '魔钢歼灭者', source: '地狱火堡垒' },
-            { id: 37, name: '午夜', source: '重返卡拉赞 - 猎手阿图门' },
-            { id: 38, name: '魔化炎狱核心', source: '暗夜要塞 - 古尔丹' },
-            { id: 39, name: '活性地狱火核心', source: '暗夜要塞 - 古尔丹' },
-            { id: 40, name: '深渊蠕虫', source: '萨格拉斯之墓 - 主母萨斯琳' },
-            { id: 41, name: '带镣铐的乌祖尔', source: '安托鲁斯·燃烧王座 - 寂灭者阿古斯' },
-            { id: 42, name: '安托兰灼焦恶犬', source: '安托鲁斯·燃烧王座 - 萨格拉斯的恶犬' },
-            { id: 43, name: '孢林抱齿兽鞍具', source: '地渊孢林 - 不羁畸变怪' },
-            { id: 44, name: '鲨鱼饵', source: '自由镇 - 哈兰·斯威提' },
-            { id: 45, name: '迅猛龙枯骨', source: '诸王之眠 - 始皇达萨' },
-            { id: 46, name: '麦卡贡维和者', source: '麦卡贡行动 - HK-8型空中压制单位' },
-            { id: 47, name: '灭世机甲', source: '达萨罗之战 - 大工匠梅卡托克' },
-            { id: 48, name: '冰川狂潮', source: '达萨罗之战 - 吉安娜·普罗德摩尔' },
-            { id: 49, name: '尼奥罗萨全视者', source: '尼奥罗萨·觉醒之城 - 腐蚀者恩佐斯' },
-            { id: 50, name: '齿轮滑翔器', source: '塔扎维什·帷纱集市 - 索·莉亚' },
-            { id: 51, name: '髓牙', source: '通灵战潮 - 缚霜者纳尔佐' },
-            { id: 52, name: '阴郁军马', source: '统御圣所 - 九武神' },
-            { id: 53, name: '复仇', source: '统御圣所 - 希尔瓦拉斯·风行者' },
-            { id: 54, name: '扎雷监察者的分形密文', source: '初诞者圣墓 - 典狱长' },
-            { id: 55, name: '量子骏马的缰绳', source: '永恒黎明 - 时空领主戴欧斯' },
-            { id: 56, name: '阿努雷洛丝烈焰启迪的缰绳', source: '阿梅达希尔梦境之愿 - 火光之龙菲莱克' },
-            { id: 57, name: '烛芯的牵绳', source: '暗焰裂口 - 黑暗之主' },
-            { id: 58, name: '苏雷吉剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
-            { id: 59, name: '扬升剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
-        ];
 
-        // 已拥有的id
-        const ownedIds = [];
+    <div class="tab-content active" id="mounts">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>坐骑</th>
+            <th>出处</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="mountsTable">
+          <!-- 数据行将由JS插入 -->
+        </tbody>
+      </table>
+    </div>
 
-        const tbody = document.querySelector('#mountTable tbody');
+    <div class="tab-content" id="transmog-armor">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>防具</th>
+            <th>出处</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="transmog-armorTable">
+          <!-- 数据行将由JS插入 -->
+        </tbody>
+      </table>
+    </div>
 
-        data.forEach(item => {
-            const isOwned = ownedIds.includes(item.id);
-            const tr = document.createElement('tr');
-            if (isOwned) tr.classList.add('owned');
-            tr.innerHTML = `
-                <td>${item.id}</td>
-                <td>${item.name}</td>
-                <td>${item.source}</td>
-                <td class="${isOwned ? 'owned' : 'not-owned'}">${isOwned ? '已拥有' : '未拥有'}</td>
-            `;
-            tbody.appendChild(tr);
+    <div class="tab-content" id="transmog-weapon">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>武器</th>
+            <th>出处</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="transmog-weaponTable">
+          <!-- 数据行将由JS插入 -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="illusion">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>幻象</th>
+            <th>出处</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="illusionTable">
+          <!-- 数据行将由JS插入 -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tab-content" id="toy">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>玩具</th>
+            <th>出处</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="toyTable">
+          <!-- 数据行将由JS插入 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    // 数据配置
+    const dataConfig = {
+      mounts: {
+        name: '坐骑',
+        data: [
+          { id: 1, name: '奥的灰烬', source: '风暴要塞 - 凯尔萨斯·逐日者' },
+          { id: 2, name: '安其拉虫子', source: '安其拉神殿 - 小怪&BOSS' },
+          { id: 3, name: '死亡战马', source: '斯坦索姆 - 奥里克斯·瑞文戴尔领主' },
+          { id: 4, name: '乌鸦之神', source: '赛泰克大厅 - 安苏' },
+          { id: 5, name: '白色陆行鸟', source: '奎尔丹纳斯岛 - 魔导师平台' },
+          { id: 6, name: '炽热战马', source: '卡拉赞 - 猎手阿图门' },
+          { id: 7, name: '蓝色始祖幼龙', source: '乌特加德之巅 - 残忍的斯卡迪' },
+          { id: 8, name: '黑色猛犸象', source: '阿尔卡冯的宝库 - 岩石看守者阿尔卡冯' },
+          { id: 9, name: '黑色幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
+          { id: 10, name: '暮光幼龙的缰绳', source: '黑曜石圣殿 - 塔萨里奥' },
+          { id: 11, name: '蓝色幼龙', source: '永恒之眼 - 玛里苟斯' },
+          { id: 12, name: '碧蓝幼龙', source: '永恒之眼 - 玛里苟斯' },
+          { id: 13, name: '米米尔隆的头部', source: '奥杜尔 - 尤格·萨隆' },
+          { id: 14, name: '奥妮克希亚座龙缰绳', source: '奥尼克希亚的巢穴 - 奥尼克希亚' },
+          { id: 15, name: '无敌', source: '冰冠堡垒 - 阿尔萨斯' },
+          { id: 16, name: '琉璃石幼龙', source: '巨石之核 - 岩皮' },
+          { id: 17, name: '北风幼龙', source: '旋云之巅 - 阿尔泰鲁斯' },
+          { id: 18, name: '迅猛龙', source: '祖尔格拉布 - 血领主曼多基尔' },
+          { id: 19, name: '黑豹', source: '祖尔格拉布 - 高阶祭司基尔娜拉' },
+          { id: 20, name: '南风幼龙', source: '风神王座 - 奥拉基尔' },
+          { id: 21, name: '米拉盖佐尔的灼热之卵', source: '火源之地 - 拉格纳罗斯' },
+          { id: 22, name: '奥利瑟拉佐尔的烈焰之爪', source: '火源之地 - 奥利瑟拉佐尔' },
+          { id: 23, name: '实验体12-B', source: '巨龙之魂 - 奥卓克希昂' },
+          { id: 24, name: '织炎幼龙', source: '巨龙之魂 - 死亡之翼' },
+          { id: 25, name: '生命缚誓者的仆从', source: '巨龙之魂 - 死亡之翼' },
+          { id: 26, name: '冰蓝原始恐角龙缰绳', source: '潘达利亚 - 乌达斯塔' },
+          { id: 27, name: '炮舰之子鞍座', source: '潘达利亚 - 萨莱斯的兵团' },
+          { id: 28, name: '神圣玛瑙云端翔龙缰绳', source: '潘达利亚 - 怒之煞' },
+          { id: 29, name: '雷霆蓝晶云端翔龙缰绳', source: '潘达利亚 - 暴风领主纳拉克' },
+          { id: 30, name: '星光云端翔龙', source: '魔古山宝库 - 伊拉贡' },
+          { id: 31, name: '郝利东的子嗣', source: '雷电王座 - 郝利东' },
+          { id: 32, name: '季鹍之嗣', source: '雷电王座 - 季鹍' },
+          { id: 33, name: '库卡隆战蝎', source: '决战奥格瑞玛 - 加尔鲁什·地狱咆哮' },
+          { id: 34, name: '日光峰林飞鹰', source: '德拉诺 - 鲁克玛' },
+          { id: 35, name: '铁蹄毁灭者', source: '黑市铸造厂 - 黑手' },
+          { id: 36, name: '魔钢歼灭者', source: '地狱火堡垒' },
+          { id: 37, name: '午夜', source: '重返卡拉赞 - 猎手阿图门' },
+          { id: 38, name: '魔化炎狱核心', source: '暗夜要塞 - 古尔丹' },
+          { id: 39, name: '活性地狱火核心', source: '暗夜要塞 - 古尔丹' },
+          { id: 40, name: '深渊蠕虫', source: '萨格拉斯之墓 - 主母萨斯琳' },
+          { id: 41, name: '带镣铐的乌祖尔', source: '安托鲁斯·燃烧王座 - 寂灭者阿古斯' },
+          { id: 42, name: '安托兰灼焦恶犬', source: '安托鲁斯·燃烧王座 - 萨格拉斯的恶犬' },
+          { id: 43, name: '孢林抱齿兽鞍具', source: '地渊孢林 - 不羁畸变怪' },
+          { id: 44, name: '鲨鱼饵', source: '自由镇 - 哈兰·斯威提' },
+          { id: 45, name: '迅猛龙枯骨', source: '诸王之眠 - 始皇达萨' },
+          { id: 46, name: '麦卡贡维和者', source: '麦卡贡行动 - HK-8型空中压制单位' },
+          { id: 47, name: '灭世机甲', source: '达萨罗之战 - 大工匠梅卡托克' },
+          { id: 48, name: '冰川狂潮', source: '达萨罗之战 - 吉安娜·普罗德摩尔' },
+          { id: 49, name: '尼奥罗萨全视者', source: '尼奥罗萨·觉醒之城 - 腐蚀者恩佐斯' },
+          { id: 50, name: '齿轮滑翔器', source: '塔扎维什·帷纱集市 - 索·莉亚' },
+          { id: 51, name: '髓牙', source: '通灵战潮 - 缚霜者纳尔佐' },
+          { id: 52, name: '阴郁军马', source: '统御圣所 - 九武神' },
+          { id: 53, name: '复仇', source: '统御圣所 - 希尔瓦拉斯·风行者' },
+          { id: 54, name: '扎雷监察者的分形密文', source: '初诞者圣墓 - 典狱长' },
+          { id: 55, name: '量子骏马的缰绳', source: '永恒黎明 - 时空领主戴欧斯' },
+          { id: 56, name: '阿努雷洛丝烈焰启迪的缰绳', source: '阿梅达希尔梦境之愿 - 火光之龙菲莱克' },
+          { id: 57, name: '烛芯的牵绳', source: '暗焰裂口 - 黑暗之主' },
+          { id: 58, name: '苏雷吉剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
+          { id: 59, name: '扬升剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
+        ]
+      },
+      'transmog-armor': {
+        name: '幻化防具',
+        data: []
+      },
+      'transmog-weapon': {
+        name: '幻化武器',
+        data: []
+      },
+      illusion: {
+        name: '幻象',
+        data: []
+      },
+      toy: {
+        name: '玩具',
+        data: []
+      }
+    };
+
+    // 当前活动的标签
+    let currentTab = 'mounts';
+
+    // 获取已收集的物品
+    function getCollectedItems(category) {
+      const stored = localStorage.getItem(`collected_${category}`);
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    // 保存已收集的物品
+    function saveCollectedItems(category, items) {
+      localStorage.setItem(`collected_${category}`, JSON.stringify(items));
+    }
+
+    // 切换收集状态
+    function toggleCollect(category, id) {
+      const collected = getCollectedItems(category);
+      const index = collected.indexOf(id);
+
+      if (index > -1) {
+        collected.splice(index, 1);
+      } else {
+        collected.push(id);
+      }
+
+      saveCollectedItems(category, collected);
+      renderTable(category);
+    }
+
+
+
+    // 渲染表格
+    function renderTable(category) {
+      const tbody = document.querySelector(`#${category}Table`);
+      const data = dataConfig[category].data;
+      const collected = getCollectedItems(category);
+
+      tbody.innerHTML = '';
+
+      data.forEach(item => {
+        const isCollected = collected.includes(item.id);
+        const tr = document.createElement('tr');
+        if (isCollected) tr.classList.add('owned');
+
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td>${item.name}</td>
+          <td>${item.source}</td>
+          <td class="status-cell">
+              <span class="${isCollected ? 'owned' : 'not-owned'}">${isCollected ? '已收集' : '未收集'}</span>
+              <button class="collect-btn ${isCollected ? 'collected' : ''}" 
+                      onclick="toggleCollect('${category}', ${item.id})"
+                      ${isCollected ? 'disabled' : ''}>
+                  ${isCollected ? '已收集' : '收集'}
+              </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 切换标签
+    function switchTab(tabName) {
+      // 隐藏所有内容
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      // 移除所有标签的active类
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // 显示选中的内容
+      document.getElementById(tabName).classList.add('active');
+
+      // 激活选中的标签
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      currentTab = tabName;
+      renderTable(tabName);
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function () {
+      // 绑定标签点击事件
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function () {
+          const tabName = this.getAttribute('data-tab');
+          switchTab(tabName);
         });
-    </script>
+      });
+
+      // 初始化第一个标签
+      renderTable('mounts');
+    });
+  </script>
 </body>
-</html> 
+
+</html>
