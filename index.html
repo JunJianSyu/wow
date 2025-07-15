@@ -422,10 +422,8 @@
     <h1>收集品管理表</h1>
     <div class="tabs">
       <div class="tab active" data-tab="mounts">坐骑</div>
-      <div class="tab" data-tab="transmog-armor">幻化防具</div>
-      <div class="tab" data-tab="transmog-weapon">幻化武器</div>
-      <div class="tab" data-tab="illusion">幻象</div>
-      <div class="tab" data-tab="toy">玩具</div>
+      <div class="tab" data-tab="transmog-weapon">武器</div>
+      <div class="tab" data-tab="illusion">附魔幻象</div>
     </div>
 
     <div class="tab-content active" id="mounts">
@@ -439,22 +437,6 @@
           </tr>
         </thead>
         <tbody id="mountsTable">
-          <!-- 数据行将由JS插入 -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="tab-content" id="transmog-armor">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>防具</th>
-            <th>出处</th>
-            <th>状态</th>
-          </tr>
-        </thead>
-        <tbody id="transmog-armorTable">
           <!-- 数据行将由JS插入 -->
         </tbody>
       </table>
@@ -481,28 +463,12 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>幻象</th>
+            <th>附魔幻象</th>
             <th>出处</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody id="illusionTable">
-          <!-- 数据行将由JS插入 -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="tab-content" id="toy">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>玩具</th>
-            <th>出处</th>
-            <th>状态</th>
-          </tr>
-        </thead>
-        <tbody id="toyTable">
           <!-- 数据行将由JS插入 -->
         </tbody>
       </table>
@@ -575,10 +541,6 @@
           { id: 59, name: '扬升剃天者的缰绳', source: '尼鲁巴尔王宫 - 安苏雷克女王' },
         ]
       },
-      'transmog-armor': {
-        name: '幻化防具',
-        data: []
-      },
       'transmog-weapon': {
         name: '幻化武器',
         data: [
@@ -616,13 +578,9 @@
         ]
       },
       illusion: {
-        name: '幻象',
+        name: '附魔幻象',
         data: []
       },
-      toy: {
-        name: '玩具',
-        data: []
-      }
     };
 
     // 当前活动的标签
