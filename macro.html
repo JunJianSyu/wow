@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macro</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .category {
+            margin-bottom: 40px;
+        }
+        
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .macro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .macro-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .macro-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: #1890ff;
+        }
+        
+        .macro-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .macro-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .macro-code {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            position: relative;
+            overflow-x: auto;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            opacity: 1;
+            background: #40a9ff;
+        }
+        
+        .tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .search-box {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+        
+        .filter-btn.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+        
+        .filter-btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+        
+        .filter-btn.active:hover {
+            background: #40a9ff;
+            color: white;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+        }
+        
+        .message.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .macro-grid {
+                grid-template-columns: 1fr;
+            }
+            .search-input {
+                min-width: 200px;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 魔兽世界宏大全</h1>
+            <p>收录各种实用的魔兽世界宏命令，提升游戏体验</p>
+        </div>
+        
+        <div class="content">
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="搜索宏名称或描述..." id="searchInput">
+                <button class="filter-btn active" onclick="filterCategory('all')">全部</button>
+                <button class="filter-btn" onclick="filterCategory('combat')">战斗</button>
+                <button class="filter-btn" onclick="filterCategory('utility')">实用</button>
+                <button class="filter-btn" onclick="filterCategory('social')">社交</button>
+                <button class="filter-btn" onclick="filterCategory('targeting')">目标</button>
+                <button class="filter-btn" onclick="filterCategory('movement')">移动</button>
+                <button class="filter-btn" onclick="filterCategory('pvp')">PVP</button>
+                <button class="filter-btn" onclick="filterCategory('profession')">专业</button>
+            </div>
+            
+            <!-- 战斗宏 -->
+            <div class="category" data-category="combat">
+                <div class="category-title">
+                    ⚔️ 战斗宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">一键输出循环</div>
+                        <div class="macro-description">自动循环释放主要输出技能，适合持续输出</div>
+                        <div class="macro-code">/castsequence reset=target 技能名称1, 技能名称2, 技能名称3, 技能名称4</div>
+                        <div class="tags">
+                            <span class="tag">输出</span>
+                            <span class="tag">循环</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">鼠标指向攻击</div>
+                        <div class="macro-description">对鼠标指向的目标释放技能，无需切换目标</div>
+                        <div class="macro-code">/cast [target=mouseover,harm,nodead] 技能名称; 技能名称</div>
+                        <div class="tags">
+                            <span class="tag">鼠标指向</span>
+                            <span class="tag">攻击</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">条件释放技能</div>
+                        <div class="macro-description">根据不同条件释放不同技能</div>
+                        <div class="macro-code">/cast [mod:shift] 技能名称1; [mod:ctrl] 技能名称2; 技能名称3</div>
+                        <div class="tags">
+                            <span class="tag">条件</span>
+                            <span class="tag">修饰键</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">自动选择目标攻击</div>
+                        <div class="macro-description">自动选择敌对目标并攻击</div>
+                        <div class="macro-code">/targetenemy [noharm][dead]
+/cast 技能名称</div>
+                        <div class="tags">
+                            <span class="tag">自动目标</span>
+                            <span class="tag">攻击</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">打断施法</div>
+                        <div class="macro-description">优先打断鼠标指向目标，否则打断当前目标</div>
+                        <div class="macro-code">/cast [target=mouseover,harm,nodead] 打断技能名称; [harm,nodead] 打断技能名称</div>
+                        <div class="tags">
+                            <span class="tag">打断</span>
+                            <span class="tag">控制</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">焦点打断</div>
+                        <div class="macro-description">打断焦点目标的施法，常用于PVP和副本</div>
+                        <div class="macro-code">/cast [@focus,harm,nodead] 打断技能名称</div>
+                        <div class="tags">
+                            <span class="tag">焦点</span>
+                            <span class="tag">打断</span>
+                            <span class="tag">PVP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">自动5码目标</div>
+                        <div class="macro-description">自动选择5码范围内的敌对目标进行攻击</div>
+                        <div class="macro-code">/run for i=1,40 do local u="raid"..i if UnitExists(u) and UnitCanAttack("player",u) and CheckInteractDistance(u,3) then TargetUnit(u) break end end
+/cast 技能名称</div>
+                        <div class="tags">
+                            <span class="tag">自动目标</span>
+                            <span class="tag">近战</span>
+                            <span class="tag">范围</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">智能AOE</div>
+                        <div class="macro-description">根据敌人数量智能选择单体或AOE技能</div>
+                        <div class="macro-code">/run local c=0 for i=1,40 do local u="nameplate"..i if UnitExists(u) and UnitCanAttack("player",u) and UnitHealth(u)>1 then c=c+1 end end
+/cast [mod:shift] AOE技能名称; 单体技能名称</div>
+                        <div class="tags">
+                            <span class="tag">AOE</span>
+                            <span class="tag">智能</span>
+                            <span class="tag">群怪</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">血量判断技能</div>
+                        <div class="macro-description">根据目标血量百分比选择不同技能</div>
+                        <div class="macro-code">/cast [target=target,harm,nodead] 技能名称1; [target=target,harm,nodead,health:20] 斩杀技能名称; 技能名称2</div>
+                        <div class="tags">
+                            <span class="tag">血量</span>
+                            <span class="tag">斩杀</span>
+                            <span class="tag">条件</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">战斗状态技能</div>
+                        <div class="macro-description">根据战斗状态选择不同技能</div>
+                        <div class="macro-code">/cast [combat] 战斗技能名称; [nocombat] 非战斗技能名称</div>
+                        <div class="tags">
+                            <span class="tag">战斗状态</span>
+                            <span class="tag">条件</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">爆发技能组合</div>
+                        <div class="macro-description">一键释放所有爆发技能</div>
+                        <div class="macro-code">/cast 爆发技能名称1
+/cast 爆发技能名称2
+/use 饰品名称</div>
+                        <div class="tags">
+                            <span class="tag">爆发</span>
+                            <span class="tag">饰品</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 治疗宏 -->
+            <div class="category" data-category="combat">
+                <div class="category-title">
+                    💚 治疗宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">鼠标指向治疗</div>
+                        <div class="macro-description">对鼠标指向的友方目标进行治疗</div>
+                        <div class="macro-code">/cast [target=mouseover,help,nodead] 治疗技能名称; [help,nodead] 治疗技能名称; [@player] 治疗技能名称</div>
+                        <div class="tags">
+                            <span class="tag">治疗</span>
+                            <span class="tag">鼠标指向</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">自我治疗</div>
+                        <div class="macro-description">强制对自己释放治疗技能</div>
+                        <div class="macro-code">/cast [@player] 治疗技能名称</div>
+                        <div class="tags">
+                            <span class="tag">自我治疗</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">群体治疗</div>
+                        <div class="macro-description">智能群体治疗，优先治疗血量最低的队友</div>
+                        <div class="macro-code">/cast [target=mouseover,help,nodead] 群疗技能名称; 群疗技能名称</div>
+                        <div class="tags">
+                            <span class="tag">群疗</span>
+                            <span class="tag">团队</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">驱散魔法</div>
+                        <div class="macro-description">驱散友方目标的负面效果</div>
+                        <div class="macro-code">/cast [target=mouseover,help,nodead] 驱散技能名称; [help,nodead] 驱散技能名称</div>
+                        <div class="tags">
+                            <span class="tag">驱散</span>
+                            <span class="tag">净化</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 实用宏 -->
+            <div class="category" data-category="utility">
+                <div class="category-title">
+                    🛠️ 实用工具宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">一键修理装备</div>
+                        <div class="macro-description">自动修理所有装备</div>
+                        <div class="macro-code">/run RepairAllItems()</div>
+                        <div class="tags">
+                            <span class="tag">修理</span>
+                            <span class="tag">装备</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速坐骑</div>
+                        <div class="macro-description">智能召唤坐骑，根据环境自动选择</div>
+                        <div class="macro-code">/cast [flyable,nocombat] 飞行坐骑名称; [nocombat] 地面坐骑名称</div>
+                        <div class="tags">
+                            <span class="tag">坐骑</span>
+                            <span class="tag">移动</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速吃喝</div>
+                        <div class="macro-description">自动使用食物和饮料</div>
+                        <div class="macro-code">/use 食物名称
+/use 饮料名称</div>
+                        <div class="tags">
+                            <span class="tag">恢复</span>
+                            <span class="tag">食物</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">切换天赋</div>
+                        <div class="macro-description">快速切换天赋专精</div>
+                        <div class="macro-code">/run SetActiveTalentGroup(GetActiveTalentGroup() == 1 and 2 or 1)</div>
+                        <div class="tags">
+                            <span class="tag">天赋</span>
+                            <span class="tag">专精</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速交易</div>
+                        <div class="macro-description">快速与目标进行交易</div>
+                        <div class="macro-code">/trade
+/invite</div>
+                        <div class="tags">
+                            <span class="tag">交易</span>
+                            <span class="tag">社交</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">清理背包</div>
+                        <div class="macro-description">自动整理背包物品</div>
+                        <div class="macro-code">/run SortBags()</div>
+                        <div class="tags">
+                            <span class="tag">背包</span>
+                            <span class="tag">整理</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">自动卖垃圾</div>
+                        <div class="macro-description">自动出售背包中的垃圾物品</div>
+                        <div class="macro-code">/run for b=0,4 do for s=1,GetContainerNumSlots(b) do local l=GetContainerItemLink(b,s) if l then local _,_,q=GetItemInfo(l) if q==0 then UseContainerItem(b,s) end end end end</div>
+                        <div class="tags">
+                            <span class="tag">自动</span>
+                            <span class="tag">出售</span>
+                            <span class="tag">垃圾</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速银行</div>
+                        <div class="macro-description">快速存取银行物品</div>
+                        <div class="macro-code">/run for i=1,28 do local l=GetContainerItemLink(0,i) if l and GetItemInfo(l) then PutItemInBank(0,i) end end</div>
+                        <div class="tags">
+                            <span class="tag">银行</span>
+                            <span class="tag">存储</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">一键邮寄</div>
+                        <div class="macro-description">快速邮寄物品给指定角色</div>
+                        <div class="macro-code">/run SendMailNameEditBox:SetText("角色名称") SendMailSubjectEditBox:SetText("物品") for i=1,12 do ClickSendMailItemButton(i) end SendMailMailButton:Click()</div>
+                        <div class="tags">
+                            <span class="tag">邮寄</span>
+                            <span class="tag">快速</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">重载界面</div>
+                        <div class="macro-description">重新加载游戏界面</div>
+                        <div class="macro-code">/reload</div>
+                        <div class="tags">
+                            <span class="tag">重载</span>
+                            <span class="tag">界面</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">显示FPS和延迟</div>
+                        <div class="macro-description">显示帧数和网络延迟</div>
+                        <div class="macro-code">/run local f=CreateFrame("Frame") f:SetScript("OnUpdate",function() if not f.t or GetTime()-f.t>1 then local fps,_,ms=GetFramerate(),GetNetStats() print("FPS:"..floor(fps).." MS:"..ms) f.t=GetTime() end end)</div>
+                        <div class="tags">
+                            <span class="tag">FPS</span>
+                            <span class="tag">延迟</span>
+                            <span class="tag">监控</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速离队</div>
+                        <div class="macro-description">快速离开当前队伍或团队</div>
+                        <div class="macro-code">/run LeaveParty()</div>
+                        <div class="tags">
+                            <span class="tag">离队</span>
+                            <span class="tag">快速</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">自动接受任务</div>
+                        <div class="macro-description">自动接受和完成任务</div>
+                        <div class="macro-code">/run if GossipTitleButton1 then GossipTitleButton1:Click() elseif QuestFrameAcceptButton:IsVisible() then QuestFrameAcceptButton:Click() elseif QuestFrameCompleteButton:IsVisible() then QuestFrameCompleteButton:Click() end</div>
+                        <div class="tags">
+                            <span class="tag">任务</span>
+                            <span class="tag">自动</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 目标宏 -->
+            <div class="category" data-category="targeting">
+                <div class="category-title">
+                    🎯 目标选择宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">焦点目标攻击</div>
+                        <div class="macro-description">攻击焦点目标</div>
+                        <div class="macro-code">/cast [@focus,harm,nodead] 技能名称</div>
+                        <div class="tags">
+                            <span class="tag">焦点</span>
+                            <span class="tag">攻击</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">设置焦点目标</div>
+                        <div class="macro-description">将当前目标设为焦点</div>
+                        <div class="macro-code">/focus [target=target,exists]; /clearfocus</div>
+                        <div class="tags">
+                            <span class="tag">焦点</span>
+                            <span class="tag">设置</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">切换目标</div>
+                        <div class="macro-description">在当前目标和焦点目标间切换</div>
+                        <div class="macro-code">/target [@focus,exists] focus; [@target,exists] target</div>
+                        <div class="tags">
+                            <span class="tag">切换</span>
+                            <span class="tag">目标</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">最近敌人</div>
+                        <div class="macro-description">选择最近的敌对目标</div>
+                        <div class="macro-code">/targetenemy [noharm]</div>
+                        <div class="tags">
+                            <span class="tag">最近</span>
+                            <span class="tag">敌人</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 社交宏 -->
+            <div class="category" data-category="social">
+                <div class="category-title">
+                    💬 社交宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">报告技能冷却</div>
+                        <div class="macro-description">在团队频道报告技能冷却时间</div>
+                        <div class="macro-code">/cast 技能名称
+/run local s,d=GetSpellCooldown("技能名称") if d>1.5 then SendChatMessage("技能名称 冷却中: "..math.ceil((s+d-GetTime())).."秒","RAID") end</div>
+                        <div class="tags">
+                            <span class="tag">报告</span>
+                            <span class="tag">冷却</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速标记</div>
+                        <div class="macro-description">快速标记目标</div>
+                        <div class="macro-code">/run SetRaidTarget("target", 1)</div>
+                        <div class="tags">
+                            <span class="tag">标记</span>
+                            <span class="tag">团队</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">求组喊话</div>
+                        <div class="macro-description">自动发送求组信息</div>
+                        <div class="macro-code">/2 求组 副本名称 需要 职业名称 密语</div>
+                        <div class="tags">
+                            <span class="tag">求组</span>
+                            <span class="tag">喊话</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">感谢治疗</div>
+                        <div class="macro-description">感谢治疗者</div>
+                        <div class="macro-code">/say 谢谢治疗！
+/thank</div>
+                        <div class="tags">
+                            <span class="tag">感谢</span>
+                            <span class="tag">礼貌</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 移动宏 -->
+            <div class="category" data-category="movement">
+                <div class="category-title">
+                    🏃 移动宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">跳跃攻击</div>
+                        <div class="macro-description">跳跃的同时释放技能</div>
+                        <div class="macro-code">/cast 技能名称
+/jump</div>
+                        <div class="tags">
+                            <span class="tag">跳跃</span>
+                            <span class="tag">攻击</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">冲锋宏</div>
+                        <div class="macro-description">自动冲向目标并攻击</div>
+                        <div class="macro-code">/cast [target=mouseover,harm,nodead] 冲锋技能名称; [harm,nodead] 冲锋技能名称</div>
+                        <div class="tags">
+                            <span class="tag">冲锋</span>
+                            <span class="tag">位移</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">逃脱技能</div>
+                        <div class="macro-description">使用逃脱技能脱离战斗</div>
+                        <div class="macro-code">/cast 逃脱技能名称
+/cast 隐身技能名称</div>
+                        <div class="tags">
+                            <span class="tag">逃脱</span>
+                            <span class="tag">生存</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">瞬移技能</div>
+                        <div class="macro-description">快速瞬移到指定位置</div>
+                        <div class="macro-code">/cast [@cursor] 瞬移技能名称</div>
+                        <div class="tags">
+                            <span class="tag">瞬移</span>
+                            <span class="tag">位移</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PVP专用宏 -->
+            <div class="category" data-category="pvp">
+                <div class="category-title">
+                    ⚔️ PVP专用宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">竞技场123</div>
+                        <div class="macro-description">快速选择竞技场敌人1、2、3</div>
+                        <div class="macro-code">/cast [target=arena1,harm,nodead] 技能名称; [target=arena2,harm,nodead] 技能名称; [target=arena3,harm,nodead] 技能名称</div>
+                        <div class="tags">
+                            <span class="tag">竞技场</span>
+                            <span class="tag">目标</span>
+                            <span class="tag">PVP</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">焦点恐惧</div>
+                        <div class="macro-description">对焦点目标释放恐惧技能</div>
+                        <div class="macro-code">/cast [@focus,harm,nodead] 恐惧技能名称</div>
+                        <div class="tags">
+                            <span class="tag">焦点</span>
+                            <span class="tag">恐惧</span>
+                            <span class="tag">控制</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">队友治疗</div>
+                        <div class="macro-description">快速治疗队友1、2、3</div>
+                        <div class="macro-code">/cast [target=party1,help,nodead] 治疗技能名称; [target=party2,help,nodead] 治疗技能名称; [@player] 治疗技能名称</div>
+                        <div class="tags">
+                            <span class="tag">队友</span>
+                            <span class="tag">治疗</span>
+                            <span class="tag">团队</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">反制技能</div>
+                        <div class="macro-description">快速使用反制技能</div>
+                        <div class="macro-code">/cast [target=mouseover,harm,nodead] 反制技能名称; [harm,nodead] 反制技能名称</div>
+                        <div class="tags">
+                            <span class="tag">反制</span>
+                            <span class="tag">控制</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">快速饰品</div>
+                        <div class="macro-description">一键使用PVP饰品</div>
+                        <div class="macro-code">/use 13
+/use 14</div>
+                        <div class="tags">
+                            <span class="tag">饰品</span>
+                            <span class="tag">解控</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">生存技能</div>
+                        <div class="macro-description">紧急情况下的生存技能组合</div>
+                        <div class="macro-code">/cast 生存技能名称1
+/cast 生存技能名称2
+/use 治疗石</div>
+                        <div class="tags">
+                            <span class="tag">生存</span>
+                            <span class="tag">紧急</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 专业技能宏 -->
+            <div class="category" data-category="profession">
+                <div class="category-title">
+                    🔨 专业技能宏
+                </div>
+                <div class="macro-grid">
+                    <div class="macro-card">
+                        <div class="macro-title">批量制造</div>
+                        <div class="macro-description">批量制造专业物品</div>
+                        <div class="macro-code">/run for i=1,20 do CastSpellByName("制造技能名称") end</div>
+                        <div class="tags">
+                            <span class="tag">制造</span>
+                            <span class="tag">批量</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">采集助手</div>
+                        <div class="macro-description">自动寻找并采集资源</div>
+                        <div class="macro-code">/cast 寻找草药
+/cast 寻找矿物</div>
+                        <div class="tags">
+                            <span class="tag">采集</span>
+                            <span class="tag">寻找</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">钓鱼助手</div>
+                        <div class="macro-description">自动钓鱼和使用鱼饵</div>
+                        <div class="macro-code">/cast [equipped:Fishing Poles] 钓鱼; 装备钓鱼竿
+/use 鱼饵名称</div>
+                        <div class="tags">
+                            <span class="tag">钓鱼</span>
+                            <span class="tag">鱼饵</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">烹饪助手</div>
+                        <div class="macro-description">批量烹饪食物</div>
+                        <div class="macro-code">/run for i=1,GetItemCount("食材名称") do CastSpellByName("烹饪技能名称") end</div>
+                        <div class="tags">
+                            <span class="tag">烹饪</span>
+                            <span class="tag">食物</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">附魔助手</div>
+                        <div class="macro-description">快速附魔装备</div>
+                        <div class="macro-code">/cast 附魔技能名称
+/use 附魔材料名称</div>
+                        <div class="tags">
+                            <span class="tag">附魔</span>
+                            <span class="tag">装备</span>
+                        </div>
+                    </div>
+                    
+                    <div class="macro-card">
+                        <div class="macro-title">分解装备</div>
+                        <div class="macro-description">自动分解绿色以上装备</div>
+                        <div class="macro-code">/run for b=0,4 do for s=1,GetContainerNumSlots(b) do local l=GetContainerItemLink(b,s) if l then local _,_,q=GetItemInfo(l) if q>=2 then CastSpellByName("分解") UseContainerItem(b,s) return end end end end</div>
+                        <div class="tags">
+                            <span class="tag">分解</span>
+                            <span class="tag">装备</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const macroCards = document.querySelectorAll('.macro-card');
+            
+            macroCards.forEach(card => {
+                const title = card.querySelector('.macro-title').textContent.toLowerCase();
+                const description = card.querySelector('.macro-description').textContent.toLowerCase();
+                const code = card.querySelector('.macro-code').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm) || code.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // 分类筛选
+        function filterCategory(category) {
+            const categories = document.querySelectorAll('.category');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            // 更新按钮状态
+            filterBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 显示/隐藏分类
+            categories.forEach(cat => {
+                if (category === 'all' || cat.dataset.category === category) {
+                    cat.style.display = 'block';
+                } else {
+                    cat.style.display = 'none';
+                }
+            });
+        }
+        
+        // 复制功能
+        function copyMacro(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('宏已复制到剪贴板');
+            }).catch(() => {
+                showMessage('复制失败，请手动复制');
+            });
+        }
+        
+        // 显示消息
+        function showMessage(text) {
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const message = document.createElement('div');
+            message.className = 'message';
+            message.textContent = text;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                message.classList.remove('show');
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 为每个宏添加复制按钮
+        document.addEventListener('DOMContentLoaded', function() {
+            const macroCards = document.querySelectorAll('.macro-card');
+            
+            macroCards.forEach(card => {
+                const codeElement = card.querySelector('.macro-code');
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = '复制';
+                copyBtn.onclick = () => copyMacro(codeElement.textContent);
+                
+                codeElement.style.position = 'relative';
+                codeElement.appendChild(copyBtn);
+            });
+        });
+    </script>
+</body>
+</html>
