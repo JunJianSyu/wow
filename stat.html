@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>属性计算器</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .version-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .penalty-table-section {
+            width: 100%;
+        }
+
+        .calculator-section-wrapper {
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1890ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .penalty-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+            min-width: 800px;
+        }
+
+        .penalty-table th,
+        .penalty-table td {
+            padding: 16px 12px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            white-space: nowrap;
+        }
+
+        .penalty-table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .penalty-table th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .penalty-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stat-name {
+            font-weight: 600;
+            text-align: left !important;
+            padding-left: 16px !important;
+        }
+
+        .penalty-10 { background: #f6ffed; color: #52c41a; }
+        .penalty-20 { background: #fff7e6; color: #fa8c16; }
+        .penalty-30 { background: #fff2e8; color: #fa541c; }
+        .penalty-40 { background: #fff1f0; color: #f5222d; }
+        .penalty-50 { background: #fff0f6; color: #eb2f96; }
+        .penalty-100 { background: #f9f0ff; color: #722ed1; }
+
+        .calculator-section {
+            margin-top: 20px;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .level-selector {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+            border-radius: 12px;
+            border: 1px solid #91d5ff;
+        }
+
+        .level-selector-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .level-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-option:hover {
+            border-color: #1890ff;
+        }
+
+        .level-option.active {
+            border-color: #1890ff;
+            background: #f0f9ff;
+        }
+
+        .level-radio {
+            margin: 0;
+        }
+
+        .conversion-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .priority-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .priority-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .priority-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .priority-label {
+            font-weight: 500;
+            color: #333;
+            min-width: 60px;
+        }
+
+        .priority-select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .optimization-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff7e6 0%, #fff2e8 100%);
+            border-radius: 12px;
+            border: 1px solid #ffd591;
+        }
+
+        .optimization-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fa8c16;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .optimization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .optimization-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .optimization-item.recommended {
+            border-color: #52c41a;
+            background: linear-gradient(135deg, #f6ffed 0%, #f0f9ff 100%);
+        }
+
+        .optimization-stat {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .optimization-current {
+            font-size: 1rem;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .optimization-recommended {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #52c41a;
+            margin-bottom: 4px;
+        }
+
+        .optimization-change {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .change-increase {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .change-decrease {
+            background: #fff2e8;
+            color: #fa541c;
+        }
+
+        .change-same {
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .percentage-display {
+            font-size: 12px;
+            color: #1890ff;
+            margin-top: 4px;
+            font-weight: 500;
+            min-height: 16px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(24, 144, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .result-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            border: 1px solid #bae7ff;
+        }
+
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 16px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-stat {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .result-penalty {
+            font-size: 0.8rem;
+            margin-top: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .weight-section {
+            margin-top: 20px;
+        }
+
+        .weight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .weight-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .weight-item:hover {
+            border-color: #1890ff;
+            transform: translateY(-2px);
+        }
+
+        .weight-stat {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .weight-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1890ff;
+        }
+
+        .tips-box {
+            background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .tips-title {
+            color: #1890ff;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips-content {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .tips-content div {
+            margin-bottom: 4px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .message.show {
+            transform: translateX(0);
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+        }
+
+        .message.warning {
+            background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%);
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+        }
+
+        .message.info {
+            background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .penalty-table {
+                font-size: 12px;
+            }
+
+            .penalty-table th,
+            .penalty-table td {
+                padding: 8px 4px;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .weight-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ 属性计算器</h1>
+            <div class="version-info">补丁 11.2 - 卡雷什的幽灵 | 最后更新：2025年8月3日</div>
+        </div>
+        
+        <div class="content">
+            <div class="main-content">
+                <!-- 属性惩罚表格 -->
+                <div class="card penalty-table-section">
+                    <div class="card-title">📊 属性惩罚表 & 等级转换</div>
+                    
+                    <div class="penalty-table-wrapper">
+                        <table class="penalty-table">
+                            <thead>
+                                <tr>
+                                    <th>属性</th>
+                                    <th>-10%</th>
+                                    <th>-20%</th>
+                                    <th>-30%</th>
+                                    <th>-40%</th>
+                                    <th>-50%</th>
+                                    <th>-100%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="stat-name">急速</td>
+                                    <td class="penalty-10">19800 - 26400</td>
+                                    <td class="penalty-20">26400 - 33000</td>
+                                    <td class="penalty-30">33000 - 39600</td>
+                                    <td class="penalty-40">39600 - 46200</td>
+                                    <td class="penalty-50">46200 - 132000</td>
+                                    <td class="penalty-100">>132000</td>
+                                </tr>
+                                <tr>
+                                    <td class="stat-name">暴击</td>
+                                    <td class="penalty-10">21000 - 28000</td>
+                                    <td class="penalty-20">28000 - 35000</td>
+                                    <td class="penalty-30">35000 - 42000</td>
+                                    <td class="penalty-40">42000 - 49000</td>
+                                    <td class="penalty-50">49000 - 140000</td>
+                                    <td class="penalty-100">>140000</td>
+                                </tr>
+                                <tr>
+                                    <td class="stat-name">全能</td>
+                                    <td class="penalty-10">23400 - 31200</td>
+                                    <td class="penalty-20">31200 - 39000</td>
+                                    <td class="penalty-30">39000 - 46800</td>
+                                    <td class="penalty-40">46800 - 54600</td>
+                                    <td class="penalty-50">54600 - 156000</td>
+                                    <td class="penalty-100">>156000</td>
+                                </tr>
+                                <tr>
+                                    <td class="stat-name">精通</td>
+                                    <td class="penalty-10">21000 - 28000</td>
+                                    <td class="penalty-20">28000 - 35000</td>
+                                    <td class="penalty-30">35000 - 42000</td>
+                                    <td class="penalty-40">42000 - 49000</td>
+                                    <td class="penalty-50">49000 - 140000</td>
+                                    <td class="penalty-100">>140000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="tips-box">
+                        <div class="tips-title">💡 80级等级转换表 (补丁 11.2)</div>
+                        <div style="margin-top: 12px;">
+                            <table class="penalty-table" style="margin-bottom: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>属性</th>
+                                        <th>效果</th>
+                                        <th>80级转换比例</th>
+                                        <th>示例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="stat-name">急速</td>
+                                        <td>1% 急速</td>
+                                        <td><strong>660</strong></td>
+                                        <td>6600 = 10%急速</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="stat-name">暴击</td>
+                                        <td>1% 暴击</td>
+                                        <td><strong>700</strong></td>
+                                        <td>7000 = 10%暴击</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="stat-name">全能</td>
+                                        <td>造成1%伤害<br>减少0.5%受到伤害</td>
+                                        <td><strong>780</strong></td>
+                                        <td>7800 = 10%全能</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="stat-name">精通</td>
+                                        <td>1% 精通</td>
+                                        <td><strong>因专精而异</strong></td>
+                                        <td>约700 = 1%精通</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 属性计算器 -->
+                <div class="card calculator-section-wrapper">
+                    <div class="card-title">🧮 属性优化计算器</div>
+                    
+                    <div class="calculator-section">
+                        <!-- 当前属性输入 -->
+                        <div class="input-group">
+                            <div class="form-group">
+                                <label class="form-label">当前急速数值</label>
+                                <input type="number" class="form-input" id="hasteValue" placeholder="输入急速数值" min="0" step="0.01" oninput="updatePercentageDisplay('haste', this.value)">
+                                <div class="percentage-display" id="hastePercent"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">当前暴击数值</label>
+                                <input type="number" class="form-input" id="critValue" placeholder="输入暴击数值" min="0" step="0.01" oninput="updatePercentageDisplay('crit', this.value)">
+                                <div class="percentage-display" id="critPercent"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">当前全能数值</label>
+                                <input type="number" class="form-input" id="versValue" placeholder="输入全能数值" min="0" step="0.01" oninput="updatePercentageDisplay('versatility', this.value)">
+                                <div class="percentage-display" id="versPercent"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">当前精通数值</label>
+                                <input type="number" class="form-input" id="masteryValue" placeholder="输入精通数值" min="0" step="0.01" oninput="updatePercentageDisplay('mastery', this.value)">
+                                <div class="percentage-display" id="masteryPercent"></div>
+                            </div>
+                        </div>
+
+                        <!-- 属性优先级设置 -->
+                        <div class="priority-section">
+                            <div class="priority-title">🎯 属性优先级设置</div>
+                            <div class="priority-grid">
+                                <div class="priority-item">
+                                    <span class="priority-label">急速:</span>
+                                    <select class="priority-select" id="hastePriority">
+                                        <option value="1">最高优先级</option>
+                                        <option value="2">高优先级</option>
+                                        <option value="3">中优先级</option>
+                                        <option value="4">低优先级</option>
+                                    </select>
+                                </div>
+                                <div class="priority-item">
+                                    <span class="priority-label">暴击:</span>
+                                    <select class="priority-select" id="critPriority">
+                                        <option value="1">最高优先级</option>
+                                        <option value="2" selected>高优先级</option>
+                                        <option value="3">中优先级</option>
+                                        <option value="4">低优先级</option>
+                                    </select>
+                                </div>
+                                <div class="priority-item">
+                                    <span class="priority-label">全能:</span>
+                                    <select class="priority-select" id="versPriority">
+                                        <option value="1">最高优先级</option>
+                                        <option value="2">高优先级</option>
+                                        <option value="3" selected>中优先级</option>
+                                        <option value="4">低优先级</option>
+                                    </select>
+                                </div>
+                                <div class="priority-item">
+                                    <span class="priority-label">精通:</span>
+                                    <select class="priority-select" id="masteryPriority">
+                                        <option value="1">最高优先级</option>
+                                        <option value="2">高优先级</option>
+                                        <option value="3">中优先级</option>
+                                        <option value="4" selected>低优先级</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="calculateOptimization()">
+                                🚀 计算最优配置
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearInputs()">
+                                🗑️ 清空输入
+                            </button>
+                        </div>
+
+                        <div class="result-section" id="resultSection" style="display: none;">
+                            <div class="result-title">📈 当前属性分析</div>
+                            <div class="result-grid" id="resultGrid">
+                                <!-- 动态生成结果 -->
+                            </div>
+                        </div>
+
+                        <div class="optimization-section" id="optimizationSection" style="display: none;">
+                            <div class="optimization-title">🎯 最优配置建议</div>
+                            <div class="optimization-grid" id="optimizationGrid">
+                                <!-- 动态生成优化建议 -->
+                            </div>
+                        </div>
+
+                        <div class="weight-section" id="weightSection" style="display: none;">
+                            <div class="result-title">⚖️ 属性权重分析</div>
+                            <div class="weight-grid" id="weightGrid">
+                                <!-- 动态生成权重建议 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="card">
+                <div class="card-title">📖 使用说明</div>
+                <div class="tips-content">
+                    <div><strong>1. 版本信息：</strong>基于补丁 11.2 - 卡雷什的幽灵 最新数据，专为80级设计</div>
+                    <div><strong>2. 转换表格：</strong>查看80级各属性的等级转换比例和效果说明</div>
+                    <div><strong>3. 属性输入：</strong>输入当前的属性百分比数值，系统会显示对应的等级值</div>
+                    <div><strong>4. 优先级设置：</strong>根据职业和玩法设置各属性的重要程度</div>
+                    <div><strong>5. 优化建议：</strong>基于优先级和惩罚机制，计算最优的属性分配方案</div>
+                    <div><strong>6. 数值转换：</strong>所有计算基于80级转换比例，确保数据准确性</div>
+                    <div><strong>7. 颜色说明：</strong>绿色(推荐改动) > 橙色(当前状态) > 红色(需要调整)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentLevel = 80;
+        
+        // 80级转换比例数据 (补丁 11.2)
+        const conversionRates = {
+            haste: 660,    // 660等级 = 1%急速
+            crit: 700,     // 700等级 = 1%暴击
+            versatility: 780, // 780等级 = 1%全能
+            mastery: 700   // 精通因专精而异，这里用平均值
+        };
+
+        // 属性惩罚数据
+        const penaltyData = {
+            haste: {
+                name: '急速',
+                ranges: [
+                    { min: 0, max: 19800, penalty: 0 },
+                    { min: 19800, max: 26400, penalty: 10 },
+                    { min: 26400, max: 33000, penalty: 20 },
+                    { min: 33000, max: 39600, penalty: 30 },
+                    { min: 39600, max: 46200, penalty: 40 },
+                    { min: 46200, max: 132000, penalty: 50 },
+                    { min: 132000, max: Infinity, penalty: 100 }
+                ]
+            },
+            crit: {
+                name: '暴击',
+                ranges: [
+                    { min: 0, max: 21000, penalty: 0 },
+                    { min: 21000, max: 28000, penalty: 10 },
+                    { min: 28000, max: 35000, penalty: 20 },
+                    { min: 35000, max: 42000, penalty: 30 },
+                    { min: 42000, max: 49000, penalty: 40 },
+                    { min: 49000, max: 140000, penalty: 50 },
+                    { min: 140000, max: Infinity, penalty: 100 }
+                ]
+            },
+            versatility: {
+                name: '全能',
+                ranges: [
+                    { min: 0, max: 23400, penalty: 0 },
+                    { min: 23400, max: 31200, penalty: 10 },
+                    { min: 31200, max: 39000, penalty: 20 },
+                    { min: 39000, max: 46800, penalty: 30 },
+                    { min: 46800, max: 54600, penalty: 40 },
+                    { min: 54600, max: 156000, penalty: 50 },
+                    { min: 156000, max: Infinity, penalty: 100 }
+                ]
+            },
+            mastery: {
+                name: '精通',
+                ranges: [
+                    { min: 0, max: 21000, penalty: 0 },
+                    { min: 21000, max: 28000, penalty: 10 },
+                    { min: 28000, max: 35000, penalty: 20 },
+                    { min: 35000, max: 42000, penalty: 30 },
+                    { min: 42000, max: 49000, penalty: 40 },
+                    { min: 49000, max: 140000, penalty: 50 },
+                    { min: 140000, max: Infinity, penalty: 100 }
+                ]
+            }
+        };
+
+        // 计算属性惩罚
+        function calculatePenalty(statType, value) {
+            const stat = penaltyData[statType];
+            if (!stat) return { penalty: 0, efficiency: 100 };
+
+            for (let range of stat.ranges) {
+                if (value >= range.min && value < range.max) {
+                    return {
+                        penalty: range.penalty,
+                        efficiency: 100 - range.penalty,
+                        range: range
+                    };
+                }
+            }
+            
+            return { penalty: 100, efficiency: 0 };
+        }
+
+        // 获取惩罚等级的CSS类
+        function getPenaltyClass(penalty) {
+            if (penalty === 0) return 'penalty-0';
+            if (penalty <= 10) return 'penalty-10';
+            if (penalty <= 20) return 'penalty-20';
+            if (penalty <= 30) return 'penalty-30';
+            if (penalty <= 40) return 'penalty-40';
+            if (penalty <= 50) return 'penalty-50';
+            return 'penalty-100';
+        }
+
+        // 获取权重建议
+        function getWeightRecommendation(penalties) {
+            const weights = {};
+            const totalEfficiency = Object.values(penalties).reduce((sum, p) => sum + p.efficiency, 0);
+            
+            // 计算相对权重
+            Object.keys(penalties).forEach(stat => {
+                const efficiency = penalties[stat].efficiency;
+                weights[stat] = totalEfficiency > 0 ? (efficiency / totalEfficiency * 100).toFixed(1) : 0;
+            });
+
+            return weights;
+        }
+
+        // 计算属性优化
+        function calculateOptimization() {
+            const hasteValue = parseFloat(document.getElementById('hasteValue').value) || 0;
+            const critValue = parseFloat(document.getElementById('critValue').value) || 0;
+            const versValue = parseFloat(document.getElementById('versValue').value) || 0;
+            const masteryValue = parseFloat(document.getElementById('masteryValue').value) || 0;
+
+            if (hasteValue === 0 && critValue === 0 && versValue === 0 && masteryValue === 0) {
+                showMessage('请至少输入一个属性数值', 'warning');
+                return;
+            }
+
+            const currentStats = {
+                haste: hasteValue,
+                crit: critValue,
+                versatility: versValue,
+                mastery: masteryValue
+            };
+
+            // 获取用户设置的优先级
+            const priorities = {
+                haste: parseInt(document.getElementById('hastePriority').value),
+                crit: parseInt(document.getElementById('critPriority').value),
+                versatility: parseInt(document.getElementById('versPriority').value),
+                mastery: parseInt(document.getElementById('masteryPriority').value)
+            };
+
+            // 计算当前属性的惩罚
+            const currentPenalties = {};
+            Object.keys(currentStats).forEach(stat => {
+                currentPenalties[stat] = calculatePenalty(stat, currentStats[stat]);
+            });
+
+            // 计算最优配置
+            const optimizedStats = calculateOptimalDistribution(currentStats, priorities);
+
+            // 显示结果
+            displayCurrentAnalysis(currentStats, currentPenalties);
+            displayOptimization(currentStats, optimizedStats, priorities);
+            displayWeights(currentPenalties, priorities);
+
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('optimizationSection').style.display = 'block';
+            document.getElementById('weightSection').style.display = 'block';
+
+            showMessage('属性优化计算完成', 'success');
+        }
+
+        // 计算最优属性分配
+        function calculateOptimalDistribution(currentStats, priorities) {
+            const totalStats = Object.values(currentStats).reduce((sum, val) => sum + val, 0);
+            const optimized = { ...currentStats };
+
+            // 按优先级排序属性
+            const sortedStats = Object.keys(priorities).sort((a, b) => priorities[a] - priorities[b]);
+
+            // 基于优先级和当前惩罚情况重新分配
+            const targetDistribution = calculateTargetDistribution(totalStats, priorities);
+
+            Object.keys(targetDistribution).forEach(stat => {
+                optimized[stat] = targetDistribution[stat];
+            });
+
+            return optimized;
+        }
+
+        // 计算目标分配
+        function calculateTargetDistribution(totalStats, priorities) {
+            const distribution = {};
+            const weights = {};
+
+            // 计算权重（优先级越高，权重越大）
+            Object.keys(priorities).forEach(stat => {
+                weights[stat] = 5 - priorities[stat]; // 1->4, 2->3, 3->2, 4->1
+            });
+
+            const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+
+            // 基础分配
+            Object.keys(weights).forEach(stat => {
+                const baseAllocation = (weights[stat] / totalWeight) * totalStats;
+                
+                // 考虑惩罚阈值，避免过度分配到高惩罚区间
+                const thresholds = penaltyData[stat].ranges;
+                let optimalValue = baseAllocation;
+
+                // 如果分配值会导致高惩罚，则调整到合理区间
+                for (let i = 0; i < thresholds.length; i++) {
+                    if (baseAllocation >= thresholds[i].min && baseAllocation < thresholds[i].max) {
+                        if (thresholds[i].penalty >= 30) {
+                            // 如果惩罚过高，调整到前一个区间的上限
+                            optimalValue = Math.min(baseAllocation, thresholds[i].min);
+                        }
+                        break;
+                    }
+                }
+
+                distribution[stat] = Math.max(0, optimalValue);
+            });
+
+            // 重新平衡以确保总和不变
+            const currentTotal = Object.values(distribution).reduce((sum, val) => sum + val, 0);
+            if (currentTotal !== totalStats && currentTotal > 0) {
+                const ratio = totalStats / currentTotal;
+                Object.keys(distribution).forEach(stat => {
+                    distribution[stat] *= ratio;
+                });
+            }
+
+            return distribution;
+        }
+
+        // 显示当前属性分析
+        function displayCurrentAnalysis(stats, penalties) {
+            const resultGrid = document.getElementById('resultGrid');
+            resultGrid.innerHTML = '';
+
+            Object.keys(stats).forEach(stat => {
+                const statData = penaltyData[stat];
+                const penalty = penalties[stat];
+                const percentValue = ratingToPercent(stats[stat], stat);
+                const ratingValue = percentToRating(stats[stat], stat);
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <div class="result-stat">${statData.name}</div>
+                    <div class="result-value">${stats[stat].toFixed(2)}% (${ratingValue.toFixed(0)})</div>
+                    <div class="result-penalty ${getPenaltyClass(penalty.penalty)}">
+                        -${penalty.penalty}% (${penalty.efficiency}%效率)
+                    </div>
+                `;
+                
+                resultGrid.appendChild(resultItem);
+            });
+        }
+
+        // 显示优化建议
+        function displayOptimization(currentStats, optimizedStats, priorities) {
+            const optimizationGrid = document.getElementById('optimizationGrid');
+            optimizationGrid.innerHTML = '';
+
+            // 按优先级排序显示
+            const sortedStats = Object.keys(priorities).sort((a, b) => priorities[a] - priorities[b]);
+
+            sortedStats.forEach(stat => {
+                const statData = penaltyData[stat];
+                const current = currentStats[stat];
+                const recommended = optimizedStats[stat];
+                const change = recommended - current;
+                const changePercent = current > 0 ? ((change / current) * 100) : 0;
+                
+                const optimizationItem = document.createElement('div');
+                optimizationItem.className = 'optimization-item';
+                
+                // 如果是推荐的改动，添加特殊样式
+                if (Math.abs(change) > current * 0.05) { // 变化超过5%
+                    optimizationItem.classList.add('recommended');
+                }
+                
+                let changeClass = 'change-same';
+                let changeText = '保持不变';
+                if (change > 0) {
+                    changeClass = 'change-increase';
+                    changeText = `+${change.toFixed(2)} (+${changePercent.toFixed(1)}%)`;
+                } else if (change < 0) {
+                    changeClass = 'change-decrease';
+                    changeText = `${change.toFixed(2)} (${changePercent.toFixed(1)}%)`;
+                }
+                
+                const priorityText = ['', '最高', '高', '中', '低'][priorities[stat]];
+                const currentRating = percentToRating(current, stat);
+                const recommendedRating = percentToRating(recommended, stat);
+                
+                optimizationItem.innerHTML = `
+                    <div class="optimization-stat">${statData.name} (${priorityText}优先级)</div>
+                    <div class="optimization-current">当前: ${current.toFixed(2)}% (${currentRating.toFixed(0)})</div>
+                    <div class="optimization-recommended">建议: ${recommended.toFixed(2)}% (${recommendedRating.toFixed(0)})</div>
+                    <div class="optimization-change ${changeClass}">${changeText}</div>
+                `;
+                
+                optimizationGrid.appendChild(optimizationItem);
+            });
+
+            // 添加总结建议
+            const summary = document.createElement('div');
+            summary.style.gridColumn = '1 / -1';
+            summary.style.textAlign = 'center';
+            summary.style.marginTop = '16px';
+            summary.style.padding = '16px';
+            summary.style.background = 'rgba(255, 255, 255, 0.8)';
+            summary.style.borderRadius = '8px';
+            summary.style.fontSize = '14px';
+            summary.style.color = '#666';
+            summary.style.border = '2px dashed #52c41a';
+            
+            const totalCurrent = Object.values(currentStats).reduce((sum, val) => sum + val, 0);
+            const totalOptimized = Object.values(optimizedStats).reduce((sum, val) => sum + val, 0);
+            
+            summary.innerHTML = `
+                <div style="font-weight: 600; color: #52c41a; margin-bottom: 8px;">📊 优化总结</div>
+                <div>基于您设置的优先级，建议重新分配属性点以获得更好的收益</div>
+                <div style="margin-top: 8px;">总属性点: ${totalCurrent.toFixed(2)} → ${totalOptimized.toFixed(2)}</div>
+            `;
+            
+            optimizationGrid.appendChild(summary);
+        }
+
+        // 显示权重分析
+        function displayWeights(penalties, priorities) {
+            const weightGrid = document.getElementById('weightGrid');
+            weightGrid.innerHTML = '';
+
+            const weights = getWeightRecommendation(penalties);
+            
+            // 按用户设置的优先级排序
+            const sortedStats = Object.keys(priorities).sort((a, b) => priorities[a] - priorities[b]);
+
+            sortedStats.forEach(stat => {
+                const statData = penaltyData[stat];
+                const weight = weights[stat];
+                const priority = priorities[stat];
+                const priorityText = ['', '最高', '高', '中', '低'][priority];
+                
+                const weightItem = document.createElement('div');
+                weightItem.className = 'weight-item';
+                weightItem.innerHTML = `
+                    <div class="weight-stat">${statData.name}</div>
+                    <div class="weight-value">${weight}%</div>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">${priorityText}优先级</div>
+                `;
+                
+                weightGrid.appendChild(weightItem);
+            });
+
+            // 添加建议文本
+            const recommendation = document.createElement('div');
+            recommendation.style.gridColumn = '1 / -1';
+            recommendation.style.textAlign = 'center';
+            recommendation.style.marginTop = '16px';
+            recommendation.style.padding = '12px';
+            recommendation.style.background = '#f8f9fa';
+            recommendation.style.borderRadius = '8px';
+            recommendation.style.fontSize = '14px';
+            recommendation.style.color = '#666';
+            
+            const topStat = sortedStats[0];
+            const topStatName = penaltyData[topStat].name;
+            recommendation.innerHTML = `💡 根据您的优先级设置，<strong>${topStatName}</strong> 应该获得最多的属性分配`;
+            
+            weightGrid.appendChild(recommendation);
+        }
+
+        // 清空输入
+        function clearInputs() {
+            document.getElementById('hasteValue').value = '';
+            document.getElementById('critValue').value = '';
+            document.getElementById('versValue').value = '';
+            document.getElementById('masteryValue').value = '';
+            
+            // 清空百分比显示
+            document.getElementById('hastePercent').textContent = '';
+            document.getElementById('critPercent').textContent = '';
+            document.getElementById('versPercent').textContent = '';
+            document.getElementById('masteryPercent').textContent = '';
+            
+            // 重置优先级为默认值
+            document.getElementById('hastePriority').value = '1';
+            document.getElementById('critPriority').value = '2';
+            document.getElementById('versPriority').value = '3';
+            document.getElementById('masteryPriority').value = '4';
+            
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('optimizationSection').style.display = 'none';
+            document.getElementById('weightSection').style.display = 'none';
+            
+            showMessage('输入已清空', 'info');
+        }
+
+        // 显示消息
+        function showMessage(text, type = 'success') {
+            // 移除已存在的消息
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            document.body.appendChild(message);
+
+            // 显示消息
+            setTimeout(() => {
+                message.classList.add('show');
+            }, 100);
+
+            // 3秒后隐藏消息
+            setTimeout(() => {
+                message.classList.remove('show');
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // 将等级转换为百分比
+        function ratingToPercent(rating, stat) {
+            const rate = conversionRates[stat];
+            return rating / rate;
+        }
+
+        // 将百分比转换为等级
+        function percentToRating(percent, stat) {
+            const rate = conversionRates[stat];
+            return percent * rate;
+        }
+
+        // 更新百分比显示
+        function updatePercentageDisplay(stat, value) {
+            const percentElement = document.getElementById(stat + 'Percent');
+            if (value && value > 0) {
+                const percent = ratingToPercent(parseFloat(value), stat);
+                percentElement.textContent = `= ${percent.toFixed(2)}%`;
+            } else {
+                percentElement.textContent = '';
+            }
+        }
+
+        // 绑定回车键事件
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        calculateOptimization();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
