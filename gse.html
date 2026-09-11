@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSE3 序列码解析器</title>
+<style>
+  :root {
+    --bg: #12141a;
+    --bg-soft: #1a1d26;
+    --bg-card: #1f2330;
+    --line: #2e3444;
+    --gold: #f0c060;
+    --gold-dim: #b8933f;
+    --text: #d8dce6;
+    --text-dim: #8b93a7;
+    --green: #6ecf8e;
+    --red: #ef7a7a;
+    --blue: #7aa2f7;
+    --purple: #bb9af7;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  header h1 { margin: 0 0 6px; font-size: 26px; color: var(--gold); letter-spacing: .5px; }
+  header p { margin: 0 0 22px; color: var(--text-dim); font-size: 13px; }
+
+  /* 管线示意 */
+  .pipe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+          background: var(--bg-soft); border: 1px solid var(--line); border-radius: 10px;
+          padding: 14px 16px; margin-bottom: 22px; }
+  .pipe .step { font-family: var(--mono); font-size: 12px; padding: 5px 11px;
+                border-radius: 6px; background: var(--bg-card); border: 1px solid var(--line); }
+  .pipe .arrow { color: var(--gold-dim); font-size: 15px; }
+  .pipe .note { margin-left: auto; color: var(--text-dim); font-size: 12px; }
+
+  /* 输入区 */
+  .inputbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  button {
+    font: inherit; font-size: 13px; cursor: pointer; border-radius: 7px;
+    padding: 8px 16px; border: 1px solid var(--line);
+    background: var(--bg-card); color: var(--text); transition: .15s;
+  }
+  button:hover { border-color: var(--gold-dim); color: var(--gold); }
+  button.primary { background: linear-gradient(180deg,#3a3220,#2a2416); border-color: var(--gold-dim); color: var(--gold); font-weight: 600; }
+  button.primary:hover { background: linear-gradient(180deg,#4a4028,#342c1c); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  textarea {
+    width: 100%; min-height: 168px; resize: vertical; font-family: var(--mono); font-size: 12px;
+    background: var(--bg-soft); color: var(--text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px; line-height: 1.5;
+  }
+  textarea:focus { outline: none; border-color: var(--gold-dim); }
+  .hint { color: var(--text-dim); font-size: 12px; margin: 8px 0 26px; }
+  .hint code { font-family: var(--mono); color: var(--gold); background: var(--bg-card);
+               padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+
+  /* 结果卡片 */
+  .card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+          margin-bottom: 20px; overflow: hidden; }
+  .card-head { padding: 14px 18px; border-bottom: 1px solid var(--line);
+               display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+               background: linear-gradient(180deg, rgba(240,192,96,.06), transparent); }
+  .card-head h2 { margin: 0; font-size: 16px; color: var(--gold); }
+  .card-head .ok { color: var(--green); font-size: 12px; font-family: var(--mono); }
+  .card-head .bad { color: var(--red); font-size: 12px; font-family: var(--mono); }
+  .card-body { padding: 16px 18px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { font-size: 12px; padding: 4px 10px; border-radius: 20px;
+          background: var(--bg-soft); border: 1px solid var(--line); }
+  .chip b { color: var(--gold); font-weight: 600; }
+  .chip span { color: var(--text-dim); }
+
+  .sect-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px;
+                color: var(--text-dim); margin: 20px 0 10px; padding-bottom: 6px;
+                border-bottom: 1px solid var(--line); }
+
+  /* 宏块 */
+  .macroblock { background: var(--bg-soft); border: 1px solid var(--line); border-left: 3px solid var(--gold-dim);
+                border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .macroblock .mb-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+                         padding: 8px 12px; background: rgba(0,0,0,.22); }
+  .macroblock .mb-head .idx { font-family: var(--mono); color: var(--gold); font-size: 12px; font-weight: 700; }
+  .tag { font-family: var(--mono); font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+  .tag.t-Repeat  { background: rgba(122,162,247,.16); color: var(--blue); }
+  .tag.t-Loop    { background: rgba(187,154,247,.16); color: var(--purple); }
+  .tag.t-Action  { background: rgba(110,207,142,.16); color: var(--green); }
+  .tag.t-other   { background: rgba(139,147,167,.16); color: var(--text-dim); }
+  pre.macro { margin: 0; padding: 10px 12px; font-family: var(--mono); font-size: 12px;
+              white-space: pre-wrap; word-break: break-word; color: #c8d0e0; }
+  pre.macro .ln { color: var(--text-dim); user-select: none; display: inline-block;
+                  width: 20px; text-align: right; margin-right: 10px; }
+  pre.macro .sid { color: var(--gold); }
+  pre.macro .cond { color: var(--purple); }
+  pre.macro .cmd { color: var(--green); }
+
+  /* 树 */
+  details { margin: 2px 0; }
+  details > summary { cursor: pointer; list-style: none; padding: 3px 6px; border-radius: 5px;
+                      font-family: var(--mono); font-size: 12px; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary:hover { background: var(--bg-soft); }
+  details > summary::before { content: "▸"; color: var(--gold-dim); margin-right: 6px; display: inline-block; transition: .15s; }
+  details[open] > summary::before { transform: rotate(90deg); }
+  .kids { margin-left: 18px; padding-left: 10px; border-left: 1px dotted var(--line); }
+  .k { color: var(--blue); }
+  .s { color: var(--green); }
+  .n { color: var(--gold); }
+  .b { color: var(--purple); }
+  .dim { color: var(--text-dim); }
+  .row { font-family: var(--mono); font-size: 12px; padding: 2px 6px; }
+
+  .spellids { display: flex; flex-wrap: wrap; gap: 6px; }
+  .spellids code { font-family: var(--mono); font-size: 12px; color: var(--gold);
+                   background: var(--bg-soft); border: 1px solid var(--line);
+                   padding: 3px 8px; border-radius: 5px; cursor: pointer; }
+  .spellids code:hover { border-color: var(--gold-dim); }
+
+  .hexdump { font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+             background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px;
+             padding: 10px 12px; white-space: pre; overflow-x: auto; margin: 0; }
+
+  .err { background: rgba(239,122,122,.08); border: 1px solid rgba(239,122,122,.3);
+         color: var(--red); border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+           background: var(--bg-card); border: 1px solid var(--gold-dim); color: var(--gold);
+           padding: 9px 20px; border-radius: 8px; font-size: 13px; opacity: 0;
+           pointer-events: none; transition: .25s; }
+  .toast.show { opacity: 1; }
+  footer { margin-top: 40px; color: var(--text-dim); font-size: 12px; text-align: center; }
+  footer a { color: var(--gold-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>GSE3 序列码解析器</h1>
+    <p>纯浏览器本地解析 · 数据不上传 · 完整复现 GSE 的 <code>DecodeMessage</code> 管线</p>
+  </header>
+
+  <div class="pipe">
+    <span class="step">!GSE3! 前缀</span><span class="arrow">→</span>
+    <span class="step">DecodeBase64</span><span class="arrow">→</span>
+    <span class="step">DecompressString (deflate-raw)</span><span class="arrow">→</span>
+    <span class="step">DeserializeCBOR</span><span class="arrow">→</span>
+    <span class="step">Lua 表</span>
+    <span class="note">对应 GSE/API/Serialisation.lua</span>
+  </div>
+
+  <div class="inputbar">
+    <button class="primary" id="btnParse">解析</button>
+    <button id="btnPaste">从剪贴板粘贴</button>
+    <button id="btnSample">载入示例</button>
+    <button id="btnClear">清空</button>
+    <button id="btnJson" disabled>导出全部 JSON</button>
+  </div>
+
+  <textarea id="input" spellcheck="false" placeholder="把 GSE 序列码粘贴到这里……&#10;&#10;支持三种写法：&#10;  1) 裸串            !GSE3!7Vfd...&#10;  2) Lua 包装        Sequences[&quot;Retribution&quot;] = [[!GSE3!7Vfd...]]&#10;  3) 多条一起粘      自动逐条解析"></textarea>
+
+  <p class="hint">
+    支持 <code>[[…]]</code> / <code>[==[…]==]</code> 长括号，自动提取 <code>Sequences["名字"]</code> 作为标签，可一次粘贴多条。
+    <code>!GSE3!+</code> 开头的是 gse.tools 加密封装，无法离线解析，会明确提示。
+  </p>
+
+  <div id="results"></div>
+
+  <footer>
+    实现依据：<a href="https://github.com/TimothyLuke/GSE-Advanced-Macro-Compiler/blob/master/GSE/API/Serialisation.lua" target="_blank" rel="noopener">GSE/API/Serialisation.lua</a>
+    · CBOR (RFC 8949) · 零外部依赖
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   1. CBOR 解码器 (RFC 8949)
+   ══════════════════════════════════════════════════════════════ */
+function cborDecode(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  const td = new TextDecoder("utf-8");
+  let i = 0;
+
+  function hex(s) {
+    return Array.from(s, b => b.toString(16).padStart(2, "0")).join(" ");
+  }
+
+  function readHead() {
+    if (i >= buf.length) throw new Error("CBOR 数据在偏移 " + i + " 处意外结束");
+    const ib = buf[i++];
+    const mt = ib >> 5, ai = ib & 0x1f;
+    let val;
+    if (ai < 24) val = ai;
+    else if (ai === 24) { val = buf[i]; i += 1; }
+    else if (ai === 25) { val = dv.getUint16(i); i += 2; }
+    else if (ai === 26) { val = dv.getUint32(i); i += 4; }
+    else if (ai === 27) { val = Number(dv.getBigUint64(i)); i += 8; }
+    else if (ai === 31) { val = null; }           // indefinite
+    else throw new Error("CBOR 保留 additional info " + ai + " @ " + (i - 1));
+    return { mt, ai, val };
+  }
+
+  function decode() {
+    const { mt, ai, val } = readHead();
+
+    if (mt === 0) return val;                                   // unsigned
+    if (mt === 1) return -1 - val;                              // negative
+
+    if (mt === 2 || mt === 3) {                                 // byte / text string
+      if (ai === 31) {                                          // indefinite
+        const chunks = [];
+        while (buf[i] !== 0xff) {
+          const h = readHead();
+          chunks.push(buf.subarray(i, i + h.val)); i += h.val;
+        }
+        i++;
+        return td.decode(concat(chunks));
+      }
+      const slice = buf.subarray(i, i + val); i += val;
+      if (mt === 3) return td.decode(slice);
+      // GSE 把 Lua string 存成 byte string；含非法 UTF-8 时退回 hex
+      const s = td.decode(slice);
+      return s.includes("\uFFFD") ? { __cborHex: hex(slice) } : s;
+    }
+
+    if (mt === 4) {                                             // array
+      const arr = [];
+      if (ai === 31) { while (buf[i] !== 0xff) arr.push(decode()); i++; }
+      else for (let n = 0; n < val; n++) arr.push(decode());
+      return arr;
+    }
+
+    if (mt === 5) {                                             // map
+      const obj = {};
+      const put = (k, v) => {
+        obj[typeof k === "object" ? JSON.stringify(k) : String(k)] = v;
+      };
+      if (ai === 31) {
+        while (buf[i] !== 0xff) { const k = decode(); put(k, decode()); }
+        i++;
+      } else for (let n = 0; n < val; n++) { const k = decode(); put(k, decode()); }
+      return obj;
+    }
+
+    if (mt === 6) return { __cborTag: val, value: decode() };   // tag
+
+    // mt === 7 : simple / float
+    if (ai === 25) return dv.getFloat16 ? dv.getFloat16(val) : NaN;
+    if (ai === 26) { i -= 4; const f = dv.getFloat32(i); i += 4; return f; }
+    if (ai === 27) { i -= 8; const f = dv.getFloat64(i); i += 8; return f; }
+    return { 20: false, 21: true, 22: null, 23: "undefined" }[val] ?? ("simple(" + val + ")");
+  }
+
+  function concat(parts) {
+    const total = parts.reduce((a, p) => a + p.length, 0);
+    const out = new Uint8Array(total); let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  }
+
+  const value = decode();
+  return { value, bytesRead: i };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   2. base64 + raw deflate
+   ══════════════════════════════════════════════════════════════ */
+function base64ToBytes(b64) {
+  // GSE 源码用 string.sub(data, 6) 截取，实际会残留一个 "!"，这里直接滤掉非字母表字符
+  const clean = b64.replace(/[^A-Za-z0-9+/=]/g, "");
+  if (!clean) throw new Error("base64 内容为空");
+  let bin;
+  try { bin = atob(clean); }
+  catch (e) { throw new Error("base64 解码失败：" + e.message); }
+  const out = new Uint8Array(bin.length);
+  for (let n = 0; n < bin.length; n++) out[n] = bin.charCodeAt(n);
+  return out;
+}
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error("当前浏览器不支持 DecompressionStream，请用较新版本的 Chrome / Edge / Safari 16.4+ / Firefox 113+");
+  }
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  try {
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  } catch (e) {
+    throw new Error("deflate 解压失败（数据可能损坏或被截断）：" + e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. 从粘贴文本里提取候选串
+   ══════════════════════════════════════════════════════════════ */
+function extractCandidates(text) {
+  const out = [], seen = new Set();
+  const push = (label, blob) => {
+    blob = blob.trim();
+    if (!blob.startsWith("!GSE3!") || seen.has(blob)) return;
+    seen.add(blob);
+    out.push({ label, blob });
+  };
+
+  let m;
+  // (a) Sequences["名字"] = [[...]]
+  const named = /Sequences\s*\[\s*["']([^"']+)["']\s*\]\s*=\s*\[(=*)\[([\s\S]*?)\]\2\]/g;
+  while ((m = named.exec(text))) push(m[1], m[3]);
+
+  // (b) 任意长括号 [[...]] / [==[...]==]
+  const bracket = /\[(=*)\[([\s\S]*?)\]\1\]/g;
+  while ((m = bracket.exec(text))) push(null, m[2]);
+
+  // (c) 裸串
+  const bare = /!GSE3!?\+?[A-Za-z0-9+/=\s]+/g;
+  while ((m = bare.exec(text))) push(null, m[0]);
+
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. 渲染
+   ══════════════════════════════════════════════════════════════ */
+const el = (tag, cls, txt) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt !== undefined) n.textContent = txt;
+  return n;
+};
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* —— 4.1 宏文本高亮 —— */
+function renderMacroText(text) {
+  const pre = el("pre", "macro");
+  text.split("\n").forEach((line, idx) => {
+    const row = el("div");
+    row.appendChild(el("span", "ln", String(idx + 1)));
+    // 拆成 命令 / 条件括号 / 其余，数字 ID 单独着色
+    const parts = line.split(/(\[[^\]]*\])/g);
+    parts.forEach(p => {
+      if (!p) return;
+      if (/^\[.*\]$/.test(p)) { row.appendChild(el("span", "cond", p)); return; }
+      p.split(/(\b\d{4,6}\b)/g).forEach(seg => {
+        if (!seg) return;
+        if (/^\d{4,6}$/.test(seg)) row.appendChild(el("span", "sid", seg));
+        else if (/^\/\w+/.test(seg)) row.appendChild(el("span", "cmd", seg));
+        else row.appendChild(document.createTextNode(seg));
+      });
+    });
+    pre.appendChild(row);
+  });
+  return pre;
+}
+
+/* —— 4.2 递归收集宏块 —— */
+function collectMacroBlocks(node, path, out) {
+  if (Array.isArray(node)) {
+    node.forEach((v, n) => collectMacroBlocks(v, path.concat("[" + n + "]"), out));
+  } else if (node && typeof node === "object") {
+    if (typeof node.macro === "string") {
+      out.push({
+        path: path.join(" › "),
+        text: node.macro,
+        Type: node.Type || node.type || "",
+        Interval: node.Interval,
+        StepFunction: node.StepFunction,
+        Repeat: node.Repeat,
+        Disabled: node.Disabled
+      });
+    }
+    for (const k of Object.keys(node)) {
+      if (k === "macro") continue;
+      collectMacroBlocks(node[k], path.concat(k), out);
+    }
+  }
+}
+
+/* —— 4.3 提取技能 ID —— */
+function collectSpellIds(blocks) {
+  const ids = new Set();
+  const CMDS = /^(cast|use|spell|castsequence|castrandom|usetoy|toy|cancelaura)\b/i;
+  blocks.forEach(b => b.text.split("\n").forEach(line => {
+    const t = line.trim();
+    if (!t.startsWith("/")) return;
+    if (!CMDS.test(t.slice(1))) return;
+    t.replace(/\[[^\]]*\]/g, " ")           // 条件括号里的数字是天赋序号，排除
+     .split(/\b(\d{4,6})\b/g)
+     .forEach(s => { if (/^\d{4,6}$/.test(s)) ids.add(s); });
+  }));
+  return Array.from(ids).sort((a, b) => Number(a) - Number(b));
+}
+
+/* —— 4.4 通用树 —— */
+function renderTree(value, key) {
+  if (Array.isArray(value)) {
+    const d = el("details"); d.open = key === undefined;
+    const s = el("summary");
+    if (key !== undefined) s.appendChild(el("span", "k", key));
+    s.appendChild(el("span", "dim", "  数组 [" + value.length + "]"));
+    d.appendChild(s);
+    const kids = el("div", "kids");
+    value.forEach((v, n) => kids.appendChild(renderTree(v, String(n))));
+    d.appendChild(kids);
+    return d;
+  }
+  if (value && typeof value === "object") {
+    if (value.__cborHex) {
+      const r = el("div", "row");
+      if (key !== undefined) r.appendChild(el("span", "k", key + " "));
+      r.appendChild(el("span", "dim", "bytes: " + value.__cborHex));
+      return r;
+    }
+    if (value.__cborTag !== undefined) {
+      const r = el("div", "row");
+      r.appendChild(el("span", "dim", "tag(" + value.__cborTag + ") "));
+      r.appendChild(renderTree(value.value));
+      return r;
+    }
+    const keys = Object.keys(value);
+    const d = el("details");
+    const s = el("summary");
+    if (key !== undefined) s.appendChild(el("span", "k", key));
+    s.appendChild(el("span", "dim", "  对象 {" + keys.length + "}"));
+    d.appendChild(s);
+    const kids = el("div", "kids");
+    keys.forEach(k => kids.appendChild(renderTree(value[k], k)));
+    d.appendChild(kids);
+    return d;
+  }
+
+  const r = el("div", "row");
+  if (key !== undefined) r.appendChild(el("span", "k", key + " "));
+  if (typeof value === "string") {
+    if (value.length > 70 || value.includes("\n")) {
+      r.appendChild(el("span", "dim", "字符串 (" + value.length + " 字符)"));
+      const d = el("details"); d.appendChild(r);
+      const kids = el("div", "kids");
+      kids.appendChild(renderMacroText(value));
+      d.appendChild(kids);
+      return d;
+    }
+    r.appendChild(el("span", "s", '"' + value + '"'));
+  } else if (typeof value === "number") {
+    r.appendChild(el("span", "n", String(value)));
+  } else if (typeof value === "boolean") {
+    r.appendChild(el("span", "b", String(value)));
+  } else {
+    r.appendChild(el("span", "dim", String(value)));
+  }
+  return r;
+}
+
+/* —— 4.5 十六进制预览 —— */
+function hexdump(bytes, limit) {
+  const n = Math.min(bytes.length, limit);
+  const lines = [];
+  for (let o = 0; o < n; o += 16) {
+    const c = bytes.subarray(o, Math.min(o + 16, n));
+    const h = Array.from(c, b => b.toString(16).padStart(2, "0")).join(" ").padEnd(47);
+    const a = Array.from(c, b => (b >= 32 && b < 127) ? String.fromCharCode(b) : ".").join("");
+    lines.push(o.toString(16).padStart(4, "0") + "  " + h + "  " + a);
+  }
+  return lines.join("\n") + (bytes.length > n ? "\n… 共 " + bytes.length + " 字节" : "");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. 主流程
+   ══════════════════════════════════════════════════════════════ */
+const parsed = [];
+
+function metaOf(obj) {
+  // payload 可能在顶层，也可能包在 {type:"COLLECTION", payload:{...}} 里
+  const p = (obj && obj.payload) ? obj.payload : obj;
+  if (!p || typeof p !== "object") return null;
+  const seqs = p.Sequences || {};
+  const names = Object.keys(seqs);
+  const first = names.length ? seqs[names[0]] : null;
+  const md = first && first.MetaData ? first.MetaData : {};
+  return { payload: p, names, md, type: obj && obj.type };
+}
+
+function buildCard(item, idx) {
+  const card = el("div", "card");
+  const head = el("div", "card-head");
+  head.appendChild(el("h2", null, "#" + (idx + 1) + "  " + (item.label || "(未命名)")));
+  card.appendChild(head);
+  const body = el("div", "card-body");
+  card.appendChild(body);
+  return { card, head, body };
+}
+
+async function parseOne(item, idx, box) {
+  const { card, head, body } = buildCard(item, idx);
+  box.appendChild(card);            // 立即挂载，逐条渐进渲染
+
+  if (item.blob.startsWith("!GSE3!+")) {
+    head.appendChild(el("span", "bad", "加密封装"));
+    body.appendChild(el("div", "err",
+      "这是 !GSE3!+ packed blob —— 由 gse.tools 用 Codec.lua 里的对称密钥加密封装（配合 MetaData.noExport 的受保护内容）。" +
+      "GSE 只解密、从不生成，密钥不在插件里公开，因此无法离线解析。"));
+    return null;
+  }
+
+  let b64, raw, cbor, result;
+  try {
+    b64   = base64ToBytes(item.blob.slice(6));
+    raw   = await inflateRaw(b64);
+    cbor  = cborDecode(raw);
+    result = cbor.value;
+  } catch (e) {
+    head.appendChild(el("span", "bad", "解析失败"));
+    body.appendChild(el("div", "err", e.message));
+    return null;
+  }
+
+  head.appendChild(el("span", "ok",
+    "✓  base64 " + (item.blob.length - 6) + " 字符 → " + b64.length + " B 压缩流 → " +
+    raw.length + " B CBOR  (消费 " + cbor.bytesRead + "/" + raw.length +
+    " · 压缩比 " + Math.round(b64.length / raw.length * 100) + "%)"));
+
+  const meta = metaOf(result);
+
+  /* 概览 chips */
+  if (meta) {
+    const chips = el("div", "chips");
+    const add = (k, v) => {
+      if (v === undefined || v === null || v === "") return;
+      const c = el("div", "chip");
+      c.appendChild(el("span", null, k + " "));
+      c.appendChild(el("b", null, String(v)));
+      chips.appendChild(c);
+    };
+    add("类型", meta.type || "PAYLOAD");
+    add("序列数", meta.names.length);
+    add("ElementCount", meta.payload.ElementCount);
+    add("变量", Object.keys(meta.payload.Variables || {}).length);
+    add("宏", Object.keys(meta.payload.Macros || {}).length);
+    meta.names.forEach(n => {
+      const md = meta.payload.Sequences[n].MetaData || {};
+      const c = el("div", "chip");
+      c.appendChild(el("span", null, n + "  "));
+      c.appendChild(el("b", null, "SpecID " + (md.SpecID ?? "?")));
+      c.appendChild(el("span", null, "  ·  " + (md.Author || "?") + "  ·  TOC " + (md.TOC ?? "?") +
+                                  "  ·  GSE " + (md.GSEVersion ?? "?")));
+      chips.appendChild(c);
+    });
+    body.appendChild(chips);
+  }
+
+  /* 宏块 */
+  const blocks = [];
+  collectMacroBlocks(result, [], blocks);
+  if (blocks.length) {
+    body.appendChild(el("div", "sect-title", "宏文本 (" + blocks.length + " 块)"));
+    blocks.forEach((b, n) => {
+      const mb = el("div", "macroblock");
+      const h = el("div", "mb-head");
+      h.appendChild(el("span", "idx", "#" + (n + 1)));
+      const t = String(b.Type);
+      h.appendChild(el("span", "tag t-" + (["Repeat","Loop","Action"].includes(t) ? t : "other"), t || "—"));
+      if (b.StepFunction) h.appendChild(el("span", "tag t-other", "StepFunction: " + b.StepFunction));
+      if (b.Interval !== undefined) h.appendChild(el("span", "tag t-other", "Interval " + b.Interval));
+      if (b.Repeat !== undefined)   h.appendChild(el("span", "tag t-other", "Repeat " + b.Repeat));
+      if (b.Disabled)               h.appendChild(el("span", "tag t-other", "已禁用"));
+      const p = el("span", "dim"); p.style.fontSize = "11px"; p.textContent = b.path;
+      h.appendChild(p);
+      mb.appendChild(h);
+      mb.appendChild(renderMacroText(b.text));
+      body.appendChild(mb);
+    });
+  }
+
+  /* 技能 ID */
+  const ids = collectSpellIds(blocks);
+  if (ids.length) {
+    body.appendChild(el("div", "sect-title", "涉及的技能 ID (" + ids.length + ") — 点击复制"));
+    const box = el("div", "spellids");
+    ids.forEach(id => {
+      const c = el("code", null, id);
+      c.title = "GSE 落盘态存的是 ID，游戏内渲染时才由 CompileMacroText(String) 翻译回本地化技能名";
+      c.onclick = () => { navigator.clipboard?.writeText(id); toast("已复制 " + id); };
+      box.appendChild(c);
+    });
+    body.appendChild(box);
+  }
+
+  /* CBOR 树 */
+  body.appendChild(el("div", "sect-title", "完整 CBOR 结构"));
+  const tree = el("div");
+  tree.appendChild(renderTree(result));
+  body.appendChild(tree);
+
+  /* hex */
+  const hd = el("details");
+  hd.appendChild(el("summary", "dim", "CBOR 原始字节（前 128）"));
+  const hdk = el("div", "kids");
+  hdk.appendChild(el("pre", "hexdump", hexdump(raw, 128)));
+  hd.appendChild(hdk);
+  body.appendChild(hd);
+
+  return { label: item.label || ("#" + (idx + 1)), data: result };
+}
+
+async function runParse() {
+  const text = document.getElementById("input").value;
+  const box = document.getElementById("results");
+  box.textContent = "";
+  parsed.length = 0;
+
+  const cands = extractCandidates(text);
+  if (!cands.length) {
+    box.appendChild(el("div", "err",
+      "没有找到 !GSE3! 串。请确认粘贴内容里包含以 !GSE3! 开头的序列码。"));
+    document.getElementById("btnJson").disabled = true;
+    return;
+  }
+
+  for (let n = 0; n < cands.length; n++) {
+    try {
+      const r = await parseOne(cands[n], n, box);
+      if (r) parsed.push(r);
+    } catch (e) {
+      box.appendChild(el("div", "err", "第 " + (n + 1) + " 条解析异常：" + e.message));
+    }
+  }
+
+  document.getElementById("btnJson").disabled = parsed.length === 0;
+  if (parsed.length) toast("成功解析 " + parsed.length + " / " + cands.length + " 条");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. 事件绑定
+   ══════════════════════════════════════════════════════════════ */
+const SAMPLES = "Sequences[\"Retribution\"] = [[!GSE3!7VfdcptGFK7dO00foO30ggdwIgHip8p0plggkM3KjkVsSx6PZ4VWgMwCgUW2dOVeta9RW5ObTh+jb9BHie+76CfGiuSok7pxZqIrsSx7vu8753A+rvUIDv0Qdsf1Qxh7sOOj5KoGoB2HyZWp+QijgFTDNCCb9SZ6naLARsk10JSzg/2zpnU2KD3nxvUjBM+VNIbJlXGI4sQLg+SXm/160Ek9n7w79/daNcQdSG51xSbZnt/GGs4iHf9RJDB2EEEBwkPmJAhdGOPTky6C3dNC0YYJYU5w2K0krtcjWz9HPhyieCsIbRcGAfK9wDllZEGU+BfMyXkQXgQVxoAYo5gJe4zpOS45XVx4kYW5/zwniPNg9gToQgROEH7kJZUMIzTFbdQDguIB9BVetehq7QBFCJI5q8sPskpmii5iYZgYJYj8NH2eYbgSJ7FbDCuXBUl4ECPPynI5BzGPKwf3sxR+KZU82ZsZq+YarBZkK/MCJz10Lx89F/LT5zqviuolWad13+YQvtmYywLXkOUB/ddO0bS7cxA2Hz8x78X8eh5T+vcxJUGQxBXnzqTenNxWzTCMzCZBUS0NJjuN/dgLY48Mx3clKudz9LGocqX3LrGgmCa0rpa159Y0W7TMWL6w1rbyCuJ3hOcS3CO+M50OxIO+ZsIO8nUV9WDqk12TknkVdSFB3QYtbrEklCS2zEkl1gCIQBUS+KdhID+iQM5fuYRESaVYRH5v+BymxWwx0S3o07PpBDGRA+3hdX260ETk2Km2NOXQYQ388nXMqhf+QBb9fj+VB1Ul+70cDTkwSoA+ApNrBUcAgFGr0+J03O7gNtD77ZbbUBQH9Dn6X1E6iq4A7G7jSzDSj/C22ne3lV0VJXbsRRnZ4x/2Ys/xAugz86HITBHRa1JTUuKGcU2jFGC6oze12VD87pu3BwAGKfSntZHJFQa3RtVF9nmS4t0BW+FLEPZEKKuZIsdvsvnKPGMshGnW4kLTqNesyjNmlkOmF8bMURh3s7er7ofxsFCwFFNrWE266UFhqBiQ43Ab+5TkUmX0/mULqGZCuTtgVKIickBxGoqq6KMLZdTCbdUcOe4l0IHagBjdNwXz9G+YKq2WoEs18lByM7cWObdx5yuuas0I2XX121rV2qt+/9XG339ZWkA52og6h4gWSsfzaW/dzkKBmf9YVWIiz+b8yNx1/PqUhp/A8/LDb/kvruPTCv9B1zFekZAnlI//1QMslsG07R7XAyyP+fEeYPm563qAR7IgT3bwr/7iu28J8t+LXyzAexbAhmJXFJG8fPZ9VsbgP3IBeX8xG/qTAt2p7pmmVrXqe41/AA==]]\nSequences[\"Protection\"] = [[!GSE3!5VfNbxtFFG9KQchwRYKKw1wQpXIT21snaRASG6+9drLrhNhtYkdRNV6/eDeZj+3MrN31KZw48Uf0U0KiV/4CJO6o/wn0iMSsPxrHcZsQECplL/bOvvfm937vN2/3PbRDHBOO248rd7AIcIuAPCq52BNcHjlFAhSYKvCIqblKDe5FwDyQD9aK5t3NzbvdzHzu8bqDpbodtrGCdjWXyS1mlrKZzFLOyBrlOyBkwJn89tFmhbWigKiXmzwoFThtYfXCNj2V2Hz31FJxCEWa7F22ApmYtX8vV5gC0cXENKy6fl7aghCwsioeZ1cvXX6/PHTY+XVBYdEBBQxojHYZ97Gge7ttwO291IKnMaJdytsrmKg0456PGQMSsM4e2uaijfg+sgkX8ZeJ6+RTswusA+JziWp+AKR9yqCMKQWRBHCCjq/+zl5ToZ5MJjzJwzFPp2j4+Zw0SD/Ynwa3nF9cMjSoQ8Z7bGUKTPq1UE+lkjcWM5lTq0b2lpEfw/AG9U9PWywv35ythFGGP52ZoRzp9FVFGOd5clWABPXVEBQy8satfBrlFvNLRnp8N/i5WE75zGzxTlT1RLVHuT7/x0Q9E5gVdAMGqM4J+RdlPVO+x0TknkwYjHj4/sI8zK61blNL2Qs7nlnKH+ZGxRy2tre3Q51RSuPyOXv6kKdTzew/etTfeTqZ1ey0X9PCH775LfzKLH2/YYf0DGm+OyuF/2O/Nd47wcQ5RfrbW9DM/upeA5osh/Nw1PyvODUFYSliA+Y2tqCrv3dhUwRcBCp+PDfjTba+EEndrb4OCY5BnICbHmpmD2WN1Hmsbs7onR998ON0c50EfPkE4LXhB70KMCk6uAXEtmAfR0RVtgEfmpHA8qjsgsIWVvhZuQwk1AgOb/tKhXJlYQHIfjyPo4VkUdp1THQs/V3vQAd78cPKcKEGaocWKkXzTidbpt/cE1mrR7rLi+TgIFruRtWD1X7sOgdN9+B+3KD3Xaefc22zs2oOrmq133Nps9HIYcu0zEbPNs2Grap23+1LqTKxe1C1XLPTbLim6fRN2rTNdQukJ4IwSXHn0w0RdAKGCRpPL2iIS9+rkhkpn4tSUSeCozW7VhwNLJ98+MeWi1mEyZDMhCTOXpQLPniHMqLr3ezKzcVs22jl9q0qpjAxEI1JnLMSwhpzz5JFdAPVgepyitT161WuYOXGtLpQLyAEDdSsYXGKVeBhQmK0lP8sMVI+IBVQSKOYR4jiGDGANlJc/0+QasuBc6CQfqsllnIeVUZhpeIhkiGwNipvIs5Gih/H3UoAAI/kfKpWrpTqCTpOBsEFaNSatWOHl8Y6tPJPnjF0TWpVfIEChgRXOGEtZTpJvBIXU6aaEq4hK89HoeCeRNdqiW8qVTedYrVe006v1k3TbWzbTt/VwnG0emxKmi3bMkdXJuNa/Qb1/aaomm5n1W20TC0SmqPNbdqkzWYrJE27Rf2m2WvY2q8Xu/rxqms6FiQsaaEEIB+NB+GJ2fh4Cj4q1ULwKtbHq4X6RuHqpbnnv9SLbJ8LD/RoG+oz0wqI7gMvBl1grbDhOMVCvbJR/RM=]]\nSequences[\"Holy\"] = [[!GSE3!5VbNbupGGG3SdoP6AG1Xo27LvdgGA8lVpUywjUnsEAH3JiFKo8EM2Ml47HrGSciiSjdddNNnyE+lLrrvtg/RR7nZd4whEC7JJWp11bQbJIbP33fO8XyHc1UN0YAEqHtTe4MiD3UIZheGjZwoYBeWTrCPKa8EMeXLtSb+LsbUweyqrsNDc/vQ1KF1eCK9lG9qOxgdwzhC7MJ8gyPmBZT9cL1do53YI/yu86VRCfwO4rdV6PCk5scbs0Y5jk4QgbLGByHW/WR2+rn7c85BjIN9P+iuMtfr8eyaH8QMByc4ytLAcRGlmHi0fwDKqqIor8D+IwXFUj4zbMhGRMC+M4QzUwlAhBnm36Q/AlBYKWdBXi6XC1pLIDQaOMSITyHPT5+/y2JzxOJBaHk1v6JmFqr6Zaq9qXkskbX7dtFB8kpJld47aFg1TWnCtHD9DN7MlEQ3S2PAX40Az+0rq8UVeUQ5vZlTPUZdl4c/a1YQhFaT49CI6bCy3sCCEsPbkRdEHh9MRto5wVfwDgkazJDOpjAEI1kwX6Ss8AC6CaoxznvoNtKl5R4iuoU6mFQ13EMx4ZuWkON12EUcd7cUSSlKiqQqklRUCqaNOdIQR7+ZJiahAHL82uU8ZKu5HCa9wUsU55JDVm0hInqzS7MeeX2PInJVS4+amO8GFV2HJB50yz159+tcpZG3S0f1zW6jvg4h3FuHNoRVZvttv109t0/7Z8ze841zSdeO2r7rti0NarDT39pJKtqKf8Z0eGqfDxSPt6s7e2240z+zfXcd9s9O7eoR3NQwcyIvTGivGTDmbhAZusCL4o1qUx/Z0hefvW3YiMaIpJc60Sagt2bFxc4xi/3NE3m10CtIK7IjjbVaaum0F0QOFu4VCl06HhEv+lZL1Nk9SgwQvAAmjhDpgqAHuItBM6YZIQJY6wVOzAAPAEf0ONM0a0Zr9QWY7AIwgghYXt/lyaNddEqBRxnHaNgK6AKj0BUYBPnYaIbYqWmfw0qrXvnyo6U//9C2xPGsG2+l37Xt5t8159FF/inHUdTHHFPsD8A+DVwU+Qf7XQHyIPMUIxB7/iotRWQBx7h/quaLkjRtf3eupExv/3j7vn8v6InZPO4yYjtKcjb13+x9s57rJo8Z0vW/WtJ5On67ANL5MpRUtVR8tET49wM6/br0oebPsk8v//J4/OUTrlG67Fl85onT7LyJdy6/0N+bmleL+SygMSFjGnMiwQMMPn4OVy2F+skzEnv+v/CnH3RbnhpRzP9KNpGl/302wZ1yD+Ny+S6bpCnk938ghdzLGtMppOl6eNK0kYQV8WAGWk+JMvObDAPMTGB5N+Y8kL+Sm7ZRqVuWXmnV6lt/AQ==]]";
+
+document.getElementById("btnParse").onclick = runParse;
+document.getElementById("btnClear").onclick = () => {
+  document.getElementById("input").value = "";
+  document.getElementById("results").textContent = "";
+  document.getElementById("btnJson").disabled = true;
+  parsed.length = 0;
+};
+document.getElementById("btnSample").onclick = () => {
+  document.getElementById("input").value = SAMPLES;
+  runParse();
+};
+document.getElementById("btnPaste").onclick = async () => {
+  try {
+    document.getElementById("input").value = await navigator.clipboard.readText();
+    runParse();
+  } catch (e) { toast("剪贴板读取被拒绝，请手动粘贴"); }
+};
+document.getElementById("btnJson").onclick = () => {
+  const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gse-decoded.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("已导出 " + parsed.length + " 条");
+};
+document.getElementById("input").addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runParse();
+});
+</script>
+</body>
+</html>
