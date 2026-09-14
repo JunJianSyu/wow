@@ -80,7 +80,9 @@
 
   .sect-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px;
                 color: var(--text-dim); margin: 20px 0 10px; padding-bottom: 6px;
-                border-bottom: 1px solid var(--line); }
+                border-bottom: 1px solid var(--line);
+                display: flex; align-items: center; justify-content: space-between; }
+  .sect-title button { padding: 2px 10px; font-size: 11px; text-transform: none; letter-spacing: 0; }
 
   /* 宏块 */
   .macroblock { background: var(--bg-soft); border: 1px solid var(--line); border-left: 3px solid var(--gold-dim);
@@ -97,7 +99,9 @@
               white-space: pre-wrap; word-break: break-word; color: #c8d0e0; }
   pre.macro .ln { color: var(--text-dim); user-select: none; display: inline-block;
                   width: 20px; text-align: right; margin-right: 10px; }
-  pre.macro .sid { color: var(--gold); }
+  pre.macro a.sid { color: var(--gold); text-decoration: none;
+                    border-bottom: 1px dotted var(--gold-dim); }
+  pre.macro a.sid:hover { background: rgba(240,192,96,.16); border-bottom-style: solid; }
   pre.macro .cond { color: var(--purple); }
   pre.macro .cmd { color: var(--green); }
 
@@ -118,10 +122,20 @@
   .row { font-family: var(--mono); font-size: 12px; padding: 2px 6px; }
 
   .spellids { display: flex; flex-wrap: wrap; gap: 6px; }
-  .spellids code { font-family: var(--mono); font-size: 12px; color: var(--gold);
-                   background: var(--bg-soft); border: 1px solid var(--line);
-                   padding: 3px 8px; border-radius: 5px; cursor: pointer; }
-  .spellids code:hover { border-color: var(--gold-dim); }
+  .spellids a { font-family: var(--mono); font-size: 12px; color: var(--gold);
+                background: var(--bg-soft); border: 1px solid var(--line);
+                padding: 3px 8px; border-radius: 5px; text-decoration: none; }
+  .spellids a:hover { border-color: var(--gold-dim); background: rgba(240,192,96,.12); }
+
+  /* 技能 ID 查询源切换 */
+  .srcbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            background: var(--bg-soft); border: 1px solid var(--line); border-radius: 10px;
+            padding: 9px 14px; margin: 0 0 26px; }
+  .srcbar .lbl { font-size: 12px; color: var(--text-dim); letter-spacing: .5px; }
+  .srcbar button { padding: 3px 12px; font-size: 12px; border-radius: 20px; }
+  .srcbar button.on { background: linear-gradient(180deg,#3a3220,#2a2416);
+                      border-color: var(--gold-dim); color: var(--gold); font-weight: 600; }
+  .srcbar .note { margin-left: auto; color: var(--text-dim); font-size: 12px; }
 
   .hexdump { font-family: var(--mono); font-size: 11px; color: var(--text-dim);
              background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px;
@@ -169,6 +183,14 @@
     支持 <code>[[…]]</code> / <code>[==[…]==]</code> 长括号，自动提取 <code>Sequences["名字"]</code> 作为标签，可一次粘贴多条。
     <code>!GSE3!+</code> 开头的是 gse.tools 加密封装，无法离线解析，会明确提示。
   </p>
+
+  <div class="srcbar">
+    <span class="lbl">技能 ID 查询源</span>
+    <button data-src="wowhead_cn" class="on">Wowhead 中文</button>
+    <button data-src="wowhead_en">Wowhead EN</button>
+    <button data-src="wago">wago.tools</button>
+    <span class="note">解析后点击任意金色技能 ID，即在新标签页打开对应页面</span>
+  </div>
 
   <div id="results"></div>
 
@@ -344,6 +366,34 @@ function toast(msg) {
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
 }
 
+/* —— 4.0 技能 ID 查询源 —— */
+const SOURCES = {
+  wowhead_cn: { label: "Wowhead 中文", url: id => "https://www.wowhead.com/cn/spell=" + id },
+  wowhead_en: { label: "Wowhead EN",   url: id => "https://www.wowhead.com/spell=" + id },
+  wago:       { label: "wago.tools",   url: id => "https://wago.tools/db2/Spell?filter[ID]=" + id }
+};
+let currentSource = "wowhead_cn";
+
+function spellLink(id) {
+  const a = document.createElement("a");
+  a.className = "sid";
+  a.dataset.sid = id;
+  a.href = SOURCES[currentSource].url(id);
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.textContent = id;
+  a.title = "在 " + SOURCES[currentSource].label + " 查询技能 " + id +
+            "（GSE 落盘态存的是 ID，游戏内渲染时才由 CompileMacroText(String) 翻译回本地化技能名）";
+  return a;
+}
+
+function refreshSpellLinks() {
+  document.querySelectorAll("a[data-sid]").forEach(a => {
+    a.href = SOURCES[currentSource].url(a.dataset.sid);
+    a.title = "在 " + SOURCES[currentSource].label + " 查询技能 " + a.dataset.sid;
+  });
+}
+
 /* —— 4.1 宏文本高亮 —— */
 function renderMacroText(text) {
   const pre = el("pre", "macro");
@@ -357,7 +407,7 @@ function renderMacroText(text) {
       if (/^\[.*\]$/.test(p)) { row.appendChild(el("span", "cond", p)); return; }
       p.split(/(\b\d{4,6}\b)/g).forEach(seg => {
         if (!seg) return;
-        if (/^\d{4,6}$/.test(seg)) row.appendChild(el("span", "sid", seg));
+        if (/^\d{4,6}$/.test(seg)) row.appendChild(spellLink(seg));
         else if (/^\/\w+/.test(seg)) row.appendChild(el("span", "cmd", seg));
         else row.appendChild(document.createTextNode(seg));
       });
@@ -588,14 +638,17 @@ async function parseOne(item, idx, box) {
   /* 技能 ID */
   const ids = collectSpellIds(blocks);
   if (ids.length) {
-    body.appendChild(el("div", "sect-title", "涉及的技能 ID (" + ids.length + ") — 点击复制"));
+    const title = el("div", "sect-title", "涉及的技能 ID (" + ids.length + ")");
+    const copyAll = el("button", null, "复制全部");
+    copyAll.onclick = () => {
+      navigator.clipboard?.writeText(ids.join(", "));
+      toast("已复制 " + ids.length + " 个技能 ID");
+    };
+    title.appendChild(copyAll);
+    body.appendChild(title);
+
     const box = el("div", "spellids");
-    ids.forEach(id => {
-      const c = el("code", null, id);
-      c.title = "GSE 落盘态存的是 ID，游戏内渲染时才由 CompileMacroText(String) 翻译回本地化技能名";
-      c.onclick = () => { navigator.clipboard?.writeText(id); toast("已复制 " + id); };
-      box.appendChild(c);
-    });
+    ids.forEach(id => box.appendChild(spellLink(id)));
     body.appendChild(box);
   }
 
@@ -676,6 +729,15 @@ document.getElementById("btnJson").onclick = () => {
 };
 document.getElementById("input").addEventListener("keydown", e => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") runParse();
+});
+document.querySelectorAll(".srcbar button[data-src]").forEach(b => {
+  b.onclick = () => {
+    currentSource = b.dataset.src;
+    document.querySelectorAll(".srcbar button[data-src]")
+            .forEach(x => x.classList.toggle("on", x === b));
+    refreshSpellLinks();          // 切换后批量更新已渲染链接，无需重新解析
+    toast("技能查询源：" + SOURCES[currentSource].label);
+  };
 });
 </script>
 </body>
